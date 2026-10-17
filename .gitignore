@@ -1,0 +1,27 @@
+# Terraform state and saved plans contain secrets in plaintext. Never commit them.
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform/
+crash.log
+crash.*.log
+
+# Variable files carry values; inputs come from the environment instead.
+*.tfvars
+*.tfvars.json
+
+# Local overrides and CLI config
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Local env files
+.env
+.env.*
+
+# Claude Code runtime files
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
