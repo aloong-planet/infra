@@ -41,7 +41,9 @@ outside Terraform is overwritten by the next apply.
 - agentshed's `main` ruleset (id `20237985`). To manage it later, import it
   first and plan to zero changes; declaring it would create a second ruleset.
 - The state bucket `aloong-planet-tfstate` and its token, which have to exist
-  before Terraform can run.
+  before Terraform can run. Both were created once through the Cloudflare API
+  with the Terraform token. The bucket is private and holds only state; it is
+  kept apart from every release bucket because those are served publicly.
 
 ## State
 
@@ -84,7 +86,7 @@ Five values, with the same names in the local env file and as secrets of the
 | `CLOUDFLARE_API_TOKEN` | Account API token `terraform-aloong-planet-infra` | Account: Workers R2 Storage Write, Account API Tokens Write, Pages Write. Zone `aloongplanet.com` only: DNS Write, Zone Read |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID | |
 | `REPO_SECRETS_TOKEN` | Fine-grained PAT `aloong-planet-infra-secrets`, resource owner `aloong-planet` | Secrets read and write on `agentshed` and `vlm-snapper`. Nothing here writes to `vlm-snapper` yet; it is in scope for later use |
-| `STATE_R2_ACCESS_KEY_ID`, `STATE_R2_SECRET_ACCESS_KEY` | R2 API token for the state bucket | Object Read & Write on `aloong-planet-tfstate` only |
+| `STATE_R2_ACCESS_KEY_ID`, `STATE_R2_SECRET_ACCESS_KEY` | S3 credentials derived from the account API token `aloong-planet-tfstate` | Workers R2 Storage Bucket Item Write on `aloong-planet-tfstate` only |
 
 The local file is `~/.config/aloong-planet/infra.env` (mode 600, outside the
 repository). To load it into the environment:
