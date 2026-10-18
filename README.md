@@ -1,29 +1,33 @@
 # aloong-planet infra
 
-Terraform for aloong-planet's cloud resources. Today it manages the R2 mirror
-behind agentshed's formal releases (agentshed ADR-0031,
-`docs/specs/mac-distribution.md`).
+Terraform for aloong-planet's cloud resources. Today it manages the R2
+release mirrors that apps publish their formal releases to, one per app. The
+apps are listed in `release_mirrors` in `release-mirrors.tf`; agentshed is the
+first (agentshed ADR-0031, `docs/specs/mac-distribution.md`).
 
 ## What this manages
 
+Each entry in `release_mirrors` gets, through `modules/release-mirror`:
+
 | Resource | Details |
 |---|---|
-| R2 bucket `agentshed-releases` | Standard storage class, default jurisdiction |
-| Bucket CORS | `GET` only, from `https://agentshed.aloongplanet.com` only |
-| R2 custom domain `dl.agentshed.aloongplanet.com` | TLS 1.2 or later. ADR-0031 falls back to `dl-agentshed.aloongplanet.com` if the certificate is not valid from outside Cloudflare |
-| Account API token `agentshed-releases-writer` | Read, write and list objects in `agentshed-releases`, nothing else |
-| Four Actions secrets in `aloong-planet/agentshed` | See below |
+| R2 bucket | The entry's `bucket`. Standard storage class, default jurisdiction |
+| Bucket CORS | `GET` only, from the entry's `allowed_origins` only |
+| R2 custom domain | The entry's `download_host`, in the `aloongplanet.com` zone. TLS 1.2 or later |
+| Account API token `<bucket>-writer` | Read, write and list objects in that bucket, nothing else |
+| Four Actions secrets in the entry's `repository` | See below |
 
-### Secrets written to `aloong-planet/agentshed`
+### Secrets written to each app's repository
 
-The names match Transfer's, so its release workflow and R2 runbook carry over.
+The names match Transfer's, so its release workflow and R2 runbook carry over,
+and every app's release workflow reads the same names.
 
 | Secret | Value |
 |---|---|
 | `R2_ACCOUNT_ID` | Cloudflare account ID |
-| `R2_ACCESS_KEY_ID` | ID of the `agentshed-releases-writer` token |
+| `R2_ACCESS_KEY_ID` | ID of the app's `<bucket>-writer` token |
 | `R2_SECRET_ACCESS_KEY` | Lowercase hex SHA-256 of that token's value |
-| `R2_BUCKET` | `agentshed-releases` |
+| `R2_BUCKET` | The app's bucket |
 
 S3 clients use the endpoint `https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com`
 with region `auto`. Terraform owns these four secrets: a change made to them
@@ -76,6 +80,24 @@ Runs are serialized: while one runs, the newest waiting run replaces older
 waiting ones. A job left unapproved fails after 30 days and holds up later
 runs until then, so cancel runs you will not approve.
 
+## Adding an app
+
+1. Add the app's repository to the repository access of the PAT
+   `aloong-planet-infra-secrets` (see Credentials). Otherwise Apply creates
+   the Cloudflare resources and then fails writing the secrets.
+2. Add an entry to `release_mirrors` in `release-mirrors.tf`. By convention
+   the bucket is `<app>-releases` and the download host is
+   `dl.<app>.aloongplanet.com`. `allowed_origins` lists the origins that read
+   the bucket from a browser, normally the app's landing page.
+3. Open a pull request, merge it, and approve Plan and then Apply. The plan
+   should add the new entry's 8 resources and change nothing else.
+4. Check the download host's certificate (below).
+5. Point the app's release workflow at the four `R2_*` secrets; agentshed's
+   or Transfer's workflow can be copied.
+
+Removing an entry destroys that app's bucket, custom domain, token and
+secrets.
+
 ## Credentials
 
 Five values, with the same names in the local env file and as secrets of the
@@ -85,7 +107,7 @@ Five values, with the same names in the local env file and as secrets of the
 |---|---|---|
 | `CLOUDFLARE_API_TOKEN` | Account API token `terraform-aloong-planet-infra` | Account: Workers R2 Storage Write, Account API Tokens Write, Pages Write. Zone `aloongplanet.com` only: DNS Write, Zone Read |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID | |
-| `REPO_SECRETS_TOKEN` | Fine-grained PAT `aloong-planet-infra-secrets`, resource owner `aloong-planet` | Secrets read and write on `agentshed` and `vlm-snapper`. Nothing here writes to `vlm-snapper` yet; it is in scope for later use |
+| `REPO_SECRETS_TOKEN` | Fine-grained PAT `aloong-planet-infra-secrets`, resource owner `aloong-planet` | Secrets read and write on every repository in `release_mirrors` (today `agentshed`), plus `vlm-snapper`, which nothing here writes to yet |
 | `STATE_R2_ACCESS_KEY_ID`, `STATE_R2_SECRET_ACCESS_KEY` | S3 credentials derived from the account API token `aloong-planet-tfstate` | Workers R2 Storage Bucket Item Write on `aloong-planet-tfstate` only |
 
 The local file is `~/.config/aloong-planet/infra.env` (mode 600, outside the
@@ -115,25 +137,25 @@ scripts/with-credentials.sh scripts/plan.sh plan.tfplan plan.result
 
 Delete `plan.tfplan` when done; it holds secrets.
 
-## Checking the download host's certificate
+## Checking a download host's certificate
 
-ADR-0031 keeps the download host open until its certificate is checked from
-outside Cloudflare:
+Check each new download host from outside Cloudflare after its first apply.
+For agentshed this was a condition of ADR-0031, which kept a fallback host
+until the check passed.
 
 ```sh
-openssl s_client -connect dl.agentshed.aloongplanet.com:443 \
-  -servername dl.agentshed.aloongplanet.com </dev/null 2>/dev/null |
+host=dl.agentshed.aloongplanet.com
+openssl s_client -connect "$host:443" -servername "$host" </dev/null 2>/dev/null |
   openssl x509 -noout -subject -ext subjectAltName -dates
 ```
 
-The host is valid if the subject or a SAN covers
-`dl.agentshed.aloongplanet.com` and the dates are current.
+The host is valid if the subject or a SAN covers it and the dates are current.
 
-Checked on 2026-10-17, right after the first apply: the certificate (issued
-by Google Trust Services, valid until 2027-01-15) lists
-`dl.agentshed.aloongplanet.com` as a SAN, and verification with hostname
-checking passed both through the local resolver and directly against a
-public-DNS address. The fallback host is not needed.
+`dl.agentshed.aloongplanet.com`, checked on 2026-10-17 right after its first
+apply: the certificate (issued by Google Trust Services, valid until
+2027-01-15) lists the host as a SAN, and verification with hostname checking
+passed both through the local resolver and directly against a public-DNS
+address. agentshed's fallback host is not needed.
 
 ## Next: the landing page
 
