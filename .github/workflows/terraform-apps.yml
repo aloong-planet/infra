@@ -1,0 +1,31 @@
+name: Terraform apps
+
+# The apps stack (stacks/apps). Plan and apply are in terraform-stack.yml.
+on:
+  push:
+    branches: [main]
+    paths:
+      - stacks/apps/**.tf
+      - stacks/apps/.terraform.lock.hcl
+      - modules/**.tf
+      - scripts/**
+      - .tool-versions
+      - .github/workflows/terraform-apps.yml
+      - .github/workflows/terraform-stack.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Runs of a stack are serialized, so one run's Plan and Apply never interleave
+# with another's.
+concurrency:
+  group: terraform-apps
+  cancel-in-progress: false
+
+jobs:
+  apps:
+    uses: ./.github/workflows/terraform-stack.yml
+    with:
+      stack: apps
+      environment: production

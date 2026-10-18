@@ -1,5 +1,5 @@
-# Versions are pinned in the root module; the provider configurations are
-# inherited from it.
+# Versions are pinned in each stack that uses this module; the provider
+# configurations are inherited from it.
 terraform {
   required_providers {
     cloudflare = {

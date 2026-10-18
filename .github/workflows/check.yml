@@ -37,8 +37,24 @@ jobs:
       - name: terraform fmt
         run: terraform fmt -check -recursive -diff
 
-      - name: terraform init (no backend)
-        run: terraform init -backend=false -input=false
-
-      - name: terraform validate
-        run: terraform validate -no-color
+      # Every stack is validated, and with it the modules it uses. A stack
+      # without its own workflow would never be applied, so that fails here too.
+      - name: terraform validate, per stack
+        run: |
+          shopt -s nullglob
+          stacks=(stacks/*/)
+          if (( ${#stacks[@]} == 0 )); then
+            echo "No stacks under stacks/." >&2
+            exit 1
+          fi
+          for dir in "${stacks[@]}"; do
+            stack="$(basename "$dir")"
+            echo "::group::$stack"
+            if [[ ! -f ".github/workflows/terraform-$stack.yml" ]]; then
+              echo "Stack $stack has no workflow .github/workflows/terraform-$stack.yml." >&2
+              exit 1
+            fi
+            terraform -chdir="$dir" init -backend=false -input=false -no-color
+            terraform -chdir="$dir" validate -no-color
+            echo "::endgroup::"
+          done

@@ -3,9 +3,11 @@
 # with credentials from an untracked env file: ~/.config/aloong-planet/infra.env
 # by default, or the path in INFRA_ENV_FILE. The file uses the same names as
 # the production environment's secrets, and maps them as the workflow does.
+# Run it from the stack directory the command is for:
 #
-#   scripts/with-credentials.sh terraform init
-#   scripts/with-credentials.sh scripts/plan.sh plan.tfplan plan.result
+#   cd stacks/apps
+#   ../../scripts/with-credentials.sh terraform init
+#   ../../scripts/with-credentials.sh ../../scripts/plan.sh plan.tfplan plan.result
 set -euo pipefail
 
 env_file="${INFRA_ENV_FILE:-$HOME/.config/aloong-planet/infra.env}"
