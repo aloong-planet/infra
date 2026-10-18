@@ -129,6 +129,12 @@ openssl s_client -connect dl.agentshed.aloongplanet.com:443 \
 The host is valid if the subject or a SAN covers
 `dl.agentshed.aloongplanet.com` and the dates are current.
 
+Checked on 2026-10-17, right after the first apply: the certificate (issued
+by Google Trust Services, valid until 2027-01-15) lists
+`dl.agentshed.aloongplanet.com` as a SAN, and verification with hostname
+checking passed both through the local resolver and directly against a
+public-DNS address. The fallback host is not needed.
+
 ## Next: the landing page
 
 agentshed's landing page (Cloudflare Pages, root directory `site`, domain
