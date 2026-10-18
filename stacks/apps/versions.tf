@@ -16,7 +16,9 @@ terraform {
   # State lives in the R2 bucket aloong-planet-tfstate, which is created by hand
   # outside this configuration. Credentials come from AWS_ACCESS_KEY_ID and
   # AWS_SECRET_ACCESS_KEY, and the endpoint from AWS_ENDPOINT_URL_S3, so the
-  # account ID never appears in the repository.
+  # account ID never appears in the repository. Every stack has its own key;
+  # this one predates the split into stacks and was kept so the state did not
+  # have to move.
   backend "s3" {
     bucket       = "aloong-planet-tfstate"
     key          = "infra/terraform.tfstate"

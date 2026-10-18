@@ -1,5 +1,5 @@
 # R2 release mirrors, one per app (modules/release-mirror). To add an app, add
-# an entry to release_mirrors; the README lists the steps around it.
+# an entry to release_mirrors; this stack's README lists the steps around it.
 #
 # Transfer's bucket, dl.aloongplanet.com and its Pages project live in the same
 # account and zone and are not managed here.
@@ -36,7 +36,7 @@ data "cloudflare_account_api_token_permission_groups_list" "r2_bucket_item_write
 }
 
 module "release_mirror" {
-  source   = "./modules/release-mirror"
+  source   = "../../modules/release-mirror"
   for_each = local.release_mirrors
 
   account_id                 = var.cloudflare_account_id
