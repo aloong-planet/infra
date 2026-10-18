@@ -1,4 +1,4 @@
-output "agentshed_download_host" {
-  description = "Custom domain serving agentshed-releases."
-  value       = cloudflare_r2_custom_domain.agentshed_download.domain
+output "download_hosts" {
+  description = "Custom domain serving each app's release bucket."
+  value       = { for app, mirror in module.release_mirror : app => mirror.download_host }
 }
