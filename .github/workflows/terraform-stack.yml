@@ -16,6 +16,21 @@ on:
         description: GitHub environment that holds the stack's credentials.
         required: true
         type: string
+    # The jobs read these from the stack's environment, but only when the
+    # caller passes them by name; a secret the caller does not pass is an empty
+    # string here, with no error. Every stack needs the state backend's, so
+    # those are required.
+    secrets:
+      CLOUDFLARE_ACCOUNT_ID:
+        required: true
+      STATE_R2_ACCESS_KEY_ID:
+        required: true
+      STATE_R2_SECRET_ACCESS_KEY:
+        required: true
+      CLOUDFLARE_API_TOKEN:
+        required: false
+      REPO_SECRETS_TOKEN:
+        required: false
 
 permissions:
   contents: read
@@ -51,8 +66,8 @@ jobs:
           terraform_version: ${{ steps.version.outputs.terraform }}
           terraform_wrapper: false
 
-      # The environment provides the secrets a stack needs; a name it does not
-      # define maps to an empty value, which the stack never reads.
+      # A secret a stack does not use is not passed and maps to an empty value,
+      # which that stack never reads.
       - name: Plan
         id: plan
         env:

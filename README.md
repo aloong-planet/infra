@@ -99,13 +99,16 @@ Only when the criteria above call for one.
    and commit `.terraform.lock.hcl`.
 2. Add `.github/workflows/terraform-<stack>.yml`: a copy of
    `terraform-apps.yml` with the stack's own paths, the concurrency group
-   `terraform-<stack>`, and its environment.
+   `terraform-<stack>`, its environment, and the secrets it uses. The called
+   workflow only sees secrets its caller passes by name: one left out is
+   empty, without an error.
 3. If it needs credentials `production` should not hold, create an
    environment for it with the owner as required reviewer, deployments from
    `main` only and "Prevent self-review" off. Give it `CLOUDFLARE_ACCOUNT_ID`
    and the `STATE_R2_*` values for the state backend, plus its own. A secret
-   name not mapped yet goes into the step environments of
-   `terraform-stack.yml` and into `scripts/with-credentials.sh`.
+   name not used yet goes into `on.workflow_call.secrets` and the step
+   environments of `terraform-stack.yml`, and into
+   `scripts/with-credentials.sh`.
 4. Its first run's plan should show only the new stack's resources.
 
 ## Credentials
