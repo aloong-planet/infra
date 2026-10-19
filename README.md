@@ -1,14 +1,15 @@
 # aloong-planet infra
 
 Terraform for aloong-planet's cloud resources, organized into stacks. Today
-there is one, `apps`, which manages the R2 release mirrors that apps publish
-their formal releases to.
+there is one, `apps`, which manages per-app resources: the R2 release mirrors
+that apps publish their formal releases to, and the apps' landing pages.
 
 ## Layout
 
 ```
 modules/                 building blocks, one per capability
   release-mirror/        one app's R2 release mirror and its release secrets
+  landing-page/          one app's landing page on Cloudflare Pages, on its domain
 stacks/                  one Terraform root each: its own state, credentials, approvals
   apps/                  per-app resources (stacks/apps/README.md)
 scripts/                 plan, apply, state snapshots and log redaction, for every stack
@@ -35,7 +36,7 @@ named for what it does. It starts a new stack only when one of these holds:
 
 | Stack | Manages | Environment | State key |
 |---|---|---|---|
-| `apps` | Per-app resources: today the R2 release mirrors | `production` | `infra/terraform.tfstate` |
+| `apps` | Per-app resources: R2 release mirrors and landing pages | `production` | `infra/terraform.tfstate` |
 
 The `apps` key predates the split into stacks and was kept so the state did
 not have to move; new stacks use `<stack>/terraform.tfstate`.
@@ -44,7 +45,8 @@ not have to move; new stacks use `<stack>/terraform.tfstate`.
 
 - Transfer's bucket, `dl.aloongplanet.com`, and the `transfer.aloongplanet.com`
   Pages project and DNS. They share the account and the zone; nothing here
-  touches zone-wide settings, and the zone is only read.
+  touches zone-wide settings, and the only DNS records declared here are the
+  landing pages' own.
 - agentshed's `main` ruleset (id `20237985`). To manage it later, import it
   first and plan to zero changes; declaring it would create a second ruleset.
 - The state bucket `aloong-planet-tfstate` and its token, which have to exist
