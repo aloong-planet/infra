@@ -16,8 +16,10 @@ locals {
       build_command     = "pnpm install --frozen-lockfile && pnpm build"
       output_dir        = "dist"
       build_env = {
-        # Astro 7 refuses an older Node; the build image's default is 22.16.0.
-        NODE_VERSION = "22.22.0"
+        # Astro 7 needs 22.22.0 or later, and the corepack the build image
+        # installs (0.36.0) wants 22.22.2 or later; the image's default is
+        # 22.16.0. 22.23.3 was the latest Node 22 release on 2026-10-19.
+        NODE_VERSION = "22.23.3"
         # site/package.json's packageManager. The build image's default pnpm
         # is 10, and it does not take pnpm's version from the lockfile.
         PNPM_VERSION = "9.12.3"
