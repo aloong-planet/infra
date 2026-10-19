@@ -19,14 +19,6 @@ locals {
   }
 }
 
-# Read only: the zone is shared with other projects and its settings stay out
-# of this configuration. Every download host is in this zone.
-data "cloudflare_zone" "aloongplanet" {
-  filter = {
-    name = "aloongplanet.com"
-  }
-}
-
 # Permission group IDs are looked up by name because Cloudflare documents the
 # IDs, not the names, as stable; one() fails the plan if the name stops
 # matching exactly one group.
