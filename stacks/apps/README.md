@@ -172,3 +172,8 @@ v5.28.0). They concern changes to an existing project, not its creation:
   ([#7303](https://github.com/cloudflare/terraform-provider-cloudflare/issues/7303)).
   Run the workflow again once the deployment is done; its plan should be
   empty.
+- The same issue makes a plan that changes a project carry the project's
+  latest deployment. Every push to the repository adds one, a push the watch
+  paths skip included, so a push between Plan and Apply makes Apply stop at
+  the fingerprint check. Approve the two close together, or run the workflow
+  again.
