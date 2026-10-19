@@ -163,9 +163,10 @@ v5.28.0). They concern changes to an existing project, not its creation:
 - Changing a binding of an existing project fails: the provider sends the
   second of the production and preview maps empty
   ([#7305](https://github.com/cloudflare/terraform-provider-cloudflare/issues/7305)).
-  `build_env` becomes maps of the same shape, so changing it may fail the
-  same way. If it does, change the variables in the dashboard as well, so
-  the next plan is empty.
+  `build_env` becomes maps of the same shape. Changing a value in it worked
+  on 2026-10-19 (`NODE_VERSION` in both maps, #8); adding or removing a
+  variable has not been tried. If a change fails, set the variables in the
+  dashboard as well, so the next plan is empty.
 - An apply that changes a project while one of its deployments is building
   can fail with "Provider produced inconsistent result after apply" after it
   has already made the change
