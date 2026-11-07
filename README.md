@@ -1,8 +1,10 @@
 # aloong-planet infra
 
 Terraform for aloong-planet's cloud resources, organized into stacks. Today
-there is one, `apps`, which manages per-app resources: the R2 release mirrors
-that apps publish their formal releases to, and the apps' landing pages.
+there are two. `apps` manages per-app resources: the R2 release mirrors that
+apps publish their formal releases to, and the apps' landing pages. `zone`
+manages the one setting of the shared `aloongplanet.com` zone that is under
+Terraform, its Browser Cache TTL.
 
 ## Layout
 
@@ -12,6 +14,7 @@ modules/                 building blocks, one per capability
   landing-page/          one app's landing page on Cloudflare Pages, on its domain
 stacks/                  one Terraform root each: its own state, credentials, approvals
   apps/                  per-app resources (stacks/apps/README.md)
+  zone/                  settings of the shared aloongplanet.com zone (stacks/zone/README.md)
 scripts/                 plan, apply, state snapshots and log redaction, for every stack
 .github/workflows/
   check.yml              fmt and validate on every pull request, without credentials
@@ -37,6 +40,7 @@ named for what it does. It starts a new stack only when one of these holds:
 | Stack | Manages | Environment | State key |
 |---|---|---|---|
 | `apps` | Per-app resources: R2 release mirrors and landing pages | `production` | `infra/terraform.tfstate` |
+| `zone` | Settings of the shared `aloongplanet.com` zone: today only its Browser Cache TTL | `production` | `zone/terraform.tfstate` |
 
 The `apps` key predates the split into stacks and was kept so the state did
 not have to move; new stacks use `<stack>/terraform.tfstate`.
@@ -44,9 +48,12 @@ not have to move; new stacks use `<stack>/terraform.tfstate`.
 ### Not managed here
 
 - Transfer's bucket, `dl.aloongplanet.com`, and the `transfer.aloongplanet.com`
-  Pages project and DNS. They share the account and the zone; nothing here
-  touches zone-wide settings, and the only DNS records declared here are the
-  landing pages' own.
+  Pages project and DNS. They share the account and the zone. The only
+  zone-wide setting declared here is the zone stack's Browser Cache TTL, and
+  the only DNS records are the landing pages' own.
+- The personal homepage (`aloongplanet.com`, `www`) and its Pages project. Its
+  own repository deploys it; it is in the zone, so the Browser Cache TTL
+  applies to it too.
 - agentshed's `main` ruleset (id `20237985`). To manage it later, import it
   first and plan to zero changes; declaring it would create a second ruleset.
 - The state bucket `aloong-planet-tfstate` and its token, which have to exist
@@ -75,9 +82,10 @@ Cloudflare account, zone and token IDs.
    `terraform validate` on every stack, without any credentials. It also
    fails if a stack has no `terraform-<stack>.yml` workflow.
 2. **Merge to `main`.** The `Terraform <stack>` workflow of each stack whose
-   Terraform files changed starts; a change to a module or a script starts
-   every stack's. Every job runs in the stack's environment, which needs the
-   owner's approval:
+   Terraform files changed starts. A change to a script starts every stack's,
+   and a change to a module starts those of the stacks that use modules (today
+   `apps`). Every job runs in the stack's environment, which needs the owner's
+   approval:
    1. Approve **Plan**. The plan appears in the run summary.
    2. If it has changes, approve **Apply** after reading it. Apply plans
       again, stops unless that plan matches the approved one, applies it,
@@ -96,7 +104,8 @@ Only when the criteria above call for one.
 
 1. Create `stacks/<stack>/` with its own `versions.tf` (copy the backend
    block from `apps`, with the key `<stack>/terraform.tfstate`),
-   `providers.tf` and `variables.tf`. Run `terraform init`, then
+   `providers.tf` and, if it takes inputs, `variables.tf`. Run
+   `terraform init`, then
    `terraform providers lock -platform=linux_amd64 -platform=darwin_arm64`,
    and commit `.terraform.lock.hcl`.
 2. Add `.github/workflows/terraform-<stack>.yml`: a copy of
@@ -117,14 +126,14 @@ Only when the criteria above call for one.
 
 Every stack's environment holds `CLOUDFLARE_ACCOUNT_ID` and the `STATE_R2_*`
 values for the state backend, plus what its resources need. Today there is
-one environment, `production`, used by `apps`. These five values have the
-same names in the local env file and as its secrets:
+one environment, `production`, used by both stacks. These five values have
+the same names in the local env file and as its secrets:
 
 | Name | What it is | Scope |
 |---|---|---|
-| `CLOUDFLARE_API_TOKEN` | Account API token `terraform-aloong-planet-infra` | Account: Workers R2 Storage Write, Account API Tokens Write, Pages Write. Zone `aloongplanet.com` only: DNS Write, Zone Read |
+| `CLOUDFLARE_API_TOKEN` | Account API token `terraform-aloong-planet-infra` | Account: Workers R2 Storage Write, Account API Tokens Write, Pages Write. Zone `aloongplanet.com` only: DNS Write, Zone Read, and Zone Settings Read and Edit, which only the `zone` stack uses |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID | |
-| `REPO_SECRETS_TOKEN` | Fine-grained PAT `aloong-planet-infra-secrets`, resource owner `aloong-planet` | Secrets read and write on every repository in `release_mirrors` (`stacks/apps`, today `agentshed`), plus `vlm-snapper`, which nothing here writes to yet |
+| `REPO_SECRETS_TOKEN` | Fine-grained PAT `aloong-planet-infra-secrets`, resource owner `aloong-planet` | Secrets read and write on every repository in `release_mirrors` (`stacks/apps`, today `agentshed`), plus `vlm-snapper`, which nothing here writes to yet. Only the `apps` stack uses it |
 | `STATE_R2_ACCESS_KEY_ID`, `STATE_R2_SECRET_ACCESS_KEY` | S3 credentials derived from the account API token `aloong-planet-tfstate` | Workers R2 Storage Bucket Item Write on `aloong-planet-tfstate` only |
 
 The local file is `~/.config/aloong-planet/infra.env` (mode 600, outside the
@@ -145,8 +154,8 @@ owner can approve their own runs.
 ## Running locally
 
 `scripts/with-credentials.sh` loads the env file and maps it the way the
-workflow does. Run it from the stack's directory, and apply only through the
-workflow.
+workflow does. Run it from the stack's directory, `stacks/apps` or
+`stacks/zone`, and apply only through the workflow.
 
 ```sh
 cd stacks/apps

@@ -1,0 +1,41 @@
+name: Terraform zone
+
+# The zone stack (stacks/zone). Plan and apply are in terraform-stack.yml.
+# The stack uses no module, so module changes do not start it.
+on:
+  push:
+    branches: [main]
+    paths:
+      - stacks/zone/**.tf
+      - stacks/zone/.terraform.lock.hcl
+      - scripts/**
+      - .tool-versions
+      - .github/workflows/terraform-zone.yml
+      - .github/workflows/terraform-stack.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Runs of a stack are serialized, so one run's Plan and Apply never interleave
+# with another's.
+concurrency:
+  group: terraform-zone
+  cancel-in-progress: false
+
+jobs:
+  zone:
+    uses: ./.github/workflows/terraform-stack.yml
+    # The production environment, as for apps: its Cloudflare token also holds
+    # the Zone Settings permissions this stack needs.
+    with:
+      stack: zone
+      environment: production
+    # Passed by name, so the stack gets these and nothing else. They exist only
+    # in the production environment, which the called jobs run in. The GitHub
+    # token is not passed: this stack does not use it.
+    secrets:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      STATE_R2_ACCESS_KEY_ID: ${{ secrets.STATE_R2_ACCESS_KEY_ID }}
+      STATE_R2_SECRET_ACCESS_KEY: ${{ secrets.STATE_R2_SECRET_ACCESS_KEY }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
