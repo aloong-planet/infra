@@ -25,3 +25,6 @@ terraform.rc
 # Claude Code runtime files
 .claude/scheduled_tasks.lock
 .claude/settings.local.json
+
+# Construction records stay out of the repository (docs/agents/docs-layout.md).
+docs/.workings/
