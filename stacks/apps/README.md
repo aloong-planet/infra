@@ -8,7 +8,9 @@ Per-app resources, one module for each kind:
   `landing-pages.tf`.
 
 agentshed is the first app with both (agentshed ADR-0031,
-`docs/specs/mac-distribution.md`, `docs/specs/landing-page.md`).
+`docs/specs/mac-distribution.md`, `docs/specs/landing-page.md`); JustSnap has
+both too, and its landing page's build settings are in `site/README.md` of the
+`justsnap` repository.
 
 The stack runs through the `Terraform apps` workflow in the `production`
 environment, and its state key is `infra/terraform.tfstate`. The repository

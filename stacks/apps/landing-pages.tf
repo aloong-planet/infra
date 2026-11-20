@@ -28,6 +28,29 @@ locals {
       watch_paths = ["site/*"]
       domain      = "agentshed.aloongplanet.com"
     }
+
+    # JustSnap's landing page: its docs/specs/landing-page.md, built from the
+    # Astro package in site/ of the justsnap repository. The build settings
+    # are the ones that package's site/README.md lists, the same as
+    # agentshed's. Its release mirror (release-mirrors.tf) allows this
+    # page's origin to read the latest pointer.
+    justsnap = {
+      repository        = "justsnap"
+      production_branch = "main"
+      root_dir          = "site"
+      build_command     = "pnpm install --frozen-lockfile && pnpm build"
+      output_dir        = "dist"
+      build_env = {
+        # Same reasons as agentshed's: Astro 7 and the build image's corepack
+        # need a newer Node than the image's 22.16.0, and the image's default
+        # pnpm (10) is not site/package.json's packageManager.
+        NODE_VERSION = "22.23.3"
+        PNPM_VERSION = "9.12.3"
+      }
+      # site/ is a package of its own, with its own lockfile.
+      watch_paths = ["site/*"]
+      domain      = "justsnap.aloongplanet.com"
+    }
   }
 }
 
