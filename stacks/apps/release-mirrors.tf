@@ -20,8 +20,7 @@ locals {
     # JustSnap's formal releases: the DMGs, the three Sparkle appcasts and the
     # latest pointer its download page reads. The appcast URL is baked into
     # every installed build, so this host cannot change after the first public
-    # release. The landing page entry comes in a later change, once site/
-    # exists in the justsnap repository.
+    # release. Its landing page is the justsnap entry in landing-pages.tf.
     justsnap = {
       repository      = "justsnap"
       bucket          = "justsnap-releases"
