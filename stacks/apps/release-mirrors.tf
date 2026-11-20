@@ -16,6 +16,18 @@ locals {
       download_host   = "dl.agentshed.aloongplanet.com"
       allowed_origins = ["https://agentshed.aloongplanet.com"]
     }
+
+    # JustSnap's formal releases: the DMGs, the three Sparkle appcasts and the
+    # latest pointer its download page reads. The appcast URL is baked into
+    # every installed build, so this host cannot change after the first public
+    # release. The landing page entry comes in a later change, once site/
+    # exists in the justsnap repository.
+    justsnap = {
+      repository      = "justsnap"
+      bucket          = "justsnap-releases"
+      download_host   = "dl.justsnap.aloongplanet.com"
+      allowed_origins = ["https://justsnap.aloongplanet.com"]
+    }
   }
 }
 
