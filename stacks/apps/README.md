@@ -5,7 +5,9 @@ Per-app resources, one module for each kind:
 - R2 release mirrors that apps publish their formal releases to, listed in
   `release_mirrors` in `release-mirrors.tf`;
 - landing pages on Cloudflare Pages, listed in `landing_pages` in
-  `landing-pages.tf`.
+  `landing-pages.tf`;
+- read access to the zone's analytics for apps whose landing page shows a
+  download count, listed in `download_counts` in `download-counts.tf`.
 
 agentshed is the first app with both (agentshed ADR-0031,
 `docs/specs/mac-distribution.md`, `docs/specs/landing-page.md`); JustSnap has
@@ -91,6 +93,43 @@ apply: the certificate (issued by Google Trust Services, valid until
 2027-01-15) lists the host as a SAN, and verification with hostname checking
 passed both through the local resolver and directly against a public-DNS
 address. agentshed's fallback host is not needed.
+
+## Download counts
+
+Each entry in `download_counts` gets, in `download-counts.tf`:
+
+| Resource | Details |
+|---|---|
+| Account API token `<app>-download-count` | Analytics Read on the `aloongplanet.com` zone, nothing else |
+| Two Actions secrets in the entry's `repository` | See below |
+
+| Secret | Value |
+|---|---|
+| `CF_ANALYTICS_API_TOKEN` | The app's `<app>-download-count` token |
+| `CF_ZONE_ID` | The `aloongplanet.com` zone's ID |
+
+The app's download count workflow reads its download host's traffic from
+Cloudflare's GraphQL Analytics API with these two, and reads and writes its
+release bucket with the release mirror's four `R2_*` secrets, so an entry
+here needs one in `release_mirrors` too. The zone ID is a secret rather than
+a variable because the PAT holds secrets permission only. Terraform owns
+both secrets, as it does the `R2_*` ones.
+
+agentshed is the first entry (agentshed ADR-0055, `docs/specs/landing-page.md`,
+REQ-011).
+
+### Adding a download count
+
+1. Check that the app's repository is in the PAT's repository access; it is
+   when the app has a release mirror.
+2. Add an entry to `download_counts` in `download-counts.tf`.
+3. Open a pull request, merge it, and approve Plan and then Apply in the
+   `Terraform apps` run. The plan should add the new entry's 3 resources and
+   change nothing else.
+4. Check that `gh secret list -R aloong-planet/<repository>` lists
+   `CF_ANALYTICS_API_TOKEN` and `CF_ZONE_ID`.
+
+Removing an entry destroys that app's token and its two secrets.
 
 ## Landing pages
 

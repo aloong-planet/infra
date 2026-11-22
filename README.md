@@ -2,7 +2,8 @@
 
 Terraform for aloong-planet's cloud resources, organized into stacks. Today
 there are two. `apps` manages per-app resources: the R2 release mirrors that
-apps publish their formal releases to, and the apps' landing pages. `zone`
+apps publish their formal releases to, the apps' landing pages, and read
+access to the zone's analytics for the apps that count their downloads. `zone`
 manages the one setting of the shared `aloongplanet.com` zone that is under
 Terraform, its Browser Cache TTL.
 
@@ -39,7 +40,7 @@ named for what it does. It starts a new stack only when one of these holds:
 
 | Stack | Manages | Environment | State key |
 |---|---|---|---|
-| `apps` | Per-app resources: R2 release mirrors and landing pages | `production` | `infra/terraform.tfstate` |
+| `apps` | Per-app resources: R2 release mirrors, landing pages and download counts' analytics tokens | `production` | `infra/terraform.tfstate` |
 | `zone` | Settings of the shared `aloongplanet.com` zone: today only its Browser Cache TTL | `production` | `zone/terraform.tfstate` |
 
 The `apps` key predates the split into stacks and was kept so the state did
@@ -133,7 +134,7 @@ the same names in the local env file and as its secrets:
 |---|---|---|
 | `CLOUDFLARE_API_TOKEN` | Account API token `terraform-aloong-planet-infra` | Account: Workers R2 Storage Write, Account API Tokens Write, Pages Write. Zone `aloongplanet.com` only: DNS Write, Zone Read, and Zone Settings Read and Edit, which only the `zone` stack uses |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID | |
-| `REPO_SECRETS_TOKEN` | Fine-grained PAT `aloong-planet-infra-secrets`, resource owner `aloong-planet` | Secrets read and write on every repository in `release_mirrors` (`stacks/apps`, today `agentshed` and `justsnap`). Only the `apps` stack uses it |
+| `REPO_SECRETS_TOKEN` | Fine-grained PAT `aloong-planet-infra-secrets`, resource owner `aloong-planet` | Secrets read and write on every repository in `release_mirrors` and `download_counts` (`stacks/apps`, today `agentshed` and `justsnap`). Only the `apps` stack uses it |
 | `STATE_R2_ACCESS_KEY_ID`, `STATE_R2_SECRET_ACCESS_KEY` | S3 credentials derived from the account API token `aloong-planet-tfstate` | Workers R2 Storage Bucket Item Write on `aloong-planet-tfstate` only |
 
 The local file is `~/.config/aloong-planet/infra.env` (mode 600, outside the
