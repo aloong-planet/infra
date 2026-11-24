@@ -5,6 +5,7 @@
 Cloudflare's zone-wide Browser Cache TTL replaces any shorter `max-age` an origin sends, and its default is 4 hours. The Pages projects in the zone send `public, max-age=0, must-revalidate`, so at the default their static files would go out on their custom domains with `max-age=14400`, while the HTML that links to them is always checked again.
 
 After a deploy that changes the personal homepage's stylesheet together with its pages, a visitor from the previous 4 hours would get the new pages with the old stylesheet, and the layout would break until the copy expires or the visitor forces a reload. Every later deploy that changes the stylesheet would open the same window.
+
 ## Solution
 
 A new `zone` stack declares the zone's Browser Cache TTL as 0, which Cloudflare calls "Respect Existing Headers". Every host in the zone then passes on the Cache-Control its origin sends.
@@ -59,24 +60,24 @@ Plan and Apply:
 Reach of the setting:
 
 - A browser that stored a file under a 4-hour lifetime keeps that copy until it expires, at most 4 hours. Only responses served after an Apply carry the origin's header.
-- Transfer and agentshed rename their static files on every build. Their files are checked again on every visit and answered 304 when unchanged, and are not kept for 4 hours.
+- Transfer and agentshed: their files are checked again on every visit and answered 304 when unchanged.
 - Download hosts: a file without a Cache-Control header gets none from Cloudflare, and browsers fall back to their own heuristics.
 - The setting changes only what browsers are told; it does not affect Cloudflare's own edge caching of these files.
 
 Drift and removal:
 
-- A change made in the dashboard is not noticed until the zone stack's workflow runs (zone-settings::US-002/AC-03).
+- A change made in the dashboard: zone-settings::US-002/AC-03 applies.
 - Removing the setting from the configuration leaves the zone at 0. To go back to 4 hours, set the value to 14400 and apply.
 - If the stack's state is lost or recreated, zone-settings::US-002/AC-01 applies.
 
 Credentials:
 
 - The production token can change any setting of the zone, not only this one, and it can also write DNS records in the zone, so a leaked token reaches every host in it.
-- A local run of the zone stack reads the same env file as the apps stack. The GitHub token in it is passed as a variable the zone stack does not declare, and is ignored.
+- In a local run of the zone stack, the env file's GitHub token is passed as a variable the zone stack does not declare, and is ignored.
 
 Running at the same time:
 
-- Zone and apps runs do not wait on or interfere with each other, and each job waits for its own approval (zone-settings::CON-003, zone-settings::US-002/AC-04).
+- Zone and apps runs at the same time: zone-settings::CON-003 and zone-settings::US-002/AC-04 apply.
 
 Content brought in from elsewhere: the stack loads no external content into anything a person interacts with, so no boundary of this kind applies.
 
