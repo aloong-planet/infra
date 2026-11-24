@@ -1,7 +1,5 @@
 # Zone settings
 
-> Related: [features](../features/zone-settings.md)
-
 ## Problem Statement
 
 Browsers keep static files from every site in the aloongplanet.com zone for 4 hours, whatever the site itself asks for. Cloudflare's zone-wide Browser Cache TTL defaults to 4 hours and replaces any shorter `max-age` an origin sends. The Pages projects in the zone send `public, max-age=0, must-revalidate`, so on their custom domains a stylesheet goes out with `max-age=14400`, while the HTML that links to it is always checked again.
