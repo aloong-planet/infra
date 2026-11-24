@@ -4,6 +4,6 @@ Each spec is the current requirement picture for one capability, for people chan
 
 A spec describes the implementation as it stands. It is rewritten in place, and its history is in Git. When a capability is removed, its spec is removed with it.
 
-| Spec | Capability |
+| Spec | In one line |
 |---|---|
 | [Zone settings](zone-settings.md) | The aloongplanet.com zone's browser cache follows each origin's own headers, managed by the `zone` stack. |
