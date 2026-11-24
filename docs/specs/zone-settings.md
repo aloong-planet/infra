@@ -2,11 +2,11 @@
 
 ## Problem Statement
 
-Browsers keep static files from every site in the aloongplanet.com zone for 4 hours, whatever the site itself asks for. Cloudflare's zone-wide Browser Cache TTL defaults to 4 hours and replaces any shorter `max-age` an origin sends. The Pages projects in the zone send `public, max-age=0, must-revalidate`, so on their custom domains a stylesheet goes out with `max-age=14400`, while the HTML that links to it is always checked again.
+Cloudflare's zone-wide Browser Cache TTL replaces any shorter `max-age` an origin sends, and its default is 4 hours. The Pages projects in the zone send `public, max-age=0, must-revalidate`, so at the default their static files would go out on their custom domains with `max-age=14400`, while the HTML that links to them is always checked again.
 
-After a deploy that changes the personal homepage's stylesheet together with its pages, a visitor from the previous 4 hours gets the new pages with the old stylesheet, and the layout breaks until the copy expires or the visitor forces a reload. Every later deploy that changes the stylesheet opens the same window.
+After a deploy that changes the personal homepage's stylesheet together with its pages, a visitor from the previous 4 hours would get the new pages with the old stylesheet, and the layout would break until the copy expires or the visitor forces a reload. Every later deploy that changes the stylesheet would open the same window.
 
-The setting is not in Terraform. The apps stack reads the zone but leaves its settings alone, and its token cannot even read them.
+The setting belongs to the zone, not to any one site, so a change to it reaches every host in the zone.
 
 ## Solution
 
@@ -53,14 +53,8 @@ Applies to: the zone stack. It has its own state key, named after the stack, in 
 
 ## Failure modes and boundaries
 
-Setting up:
+Plan and Apply:
 
-- The production token does not yet have the Zone Settings permissions: Plan fails at the import with Cloudflare's authentication error, and nothing changes.
-- The shared stack workflow always sets the GitHub token and the account ID as Terraform variables. The zone stack declares neither, and Terraform ignores environment values for variables a configuration does not declare. The zone stack's workflow does not pass the GitHub token at all.
-
-Merging:
-
-- The change that adds the stack starts only the zone stack's workflow. The apps stack's files, the modules and the scripts are unchanged, so the apps workflow does not start.
 - A Plan is approved, then the setting is changed in the dashboard before Apply: Apply plans again, finds a different fingerprint and stops without changing anything. Run the workflow again.
 - Apply sets the value, but the follow-up plan still has changes (for example, Cloudflare returns the value in another form): Apply fails after the state snapshot, and the difference is investigated before another run.
 - Cloudflare rejects the value: Plan passes, because the setting's value has no fixed type in the provider, and Apply fails with Cloudflare's error after the state snapshot.
@@ -121,17 +115,13 @@ Content brought in from elsewhere: the stack loads no external content into anyt
 
 ## Further Notes
 
-Facts this spec rests on, checked on 2026-11-07:
+Facts this spec rests on:
 
-- Cloudflare's Browser Cache TTL documentation: the default is 4 hours on every plan, and Cloudflare overrides an origin's cache expiration that is shorter than the setting.
-- Cloudflare's zone settings API: "Setting a TTL of 0 is equivalent to selecting Respect Existing Headers". Reading and editing the setting take Zone Settings Read and Zone Settings Write.
-- Cloudflare provider 5.28.0:
+- Cloudflare's Browser Cache TTL: the default is 4 hours on every plan; Cloudflare overrides an origin's cache expiration that is shorter than the setting; with "Respect Existing Headers" it neither overrides nor inserts a Cache-Control header unless a cache rule says so (Cloudflare's documentation source, read 2026-11-25).
+- Cloudflare's zone settings API: "Setting a TTL of 0 is equivalent to selecting `Respect Existing Headers` and is allowed for all plans" (the API's field description in Cloudflare's Go SDK, read 2026-11-25).
+- Cloudflare provider 5.28.0, the locked release:
   - `cloudflare_zone_setting` takes a zone ID, a setting ID and a value;
+  - its accepted permissions are Zone Settings Read and Zone Settings Write;
   - its import ID is `<zone_id>/<setting_id>`;
   - its delete does nothing.
-- Terraform 1.16.6 ignores `TF_VAR_` environment values for variables a configuration does not declare, without a warning.
-- Response headers on 2026-11-07:
-  - on the `pages.dev` hosts, every file is served with `max-age=0`;
-  - on the custom domains, static files are served with `max-age=14400` and HTML with `max-age=0`;
-  - `dl.aloongplanet.com` downloads are served with `max-age=31536000, immutable`.
-- The first plan of the zone stack, on 2026-11-07, read the current value: 14400, the 4-hour default.
+- Terraform 1.16.6, the pinned version, ignores `TF_VAR_` environment values for variables a configuration does not declare, without a warning (tested with a throwaway configuration, 2026-11-25).
