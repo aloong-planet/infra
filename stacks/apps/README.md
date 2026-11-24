@@ -9,6 +9,9 @@ Per-app resources, one module for each kind:
 - read access to the zone's analytics for apps whose landing page shows a
   download count, listed in `download_counts` in `download-counts.tf`.
 
+It also mints the token the `workers` stack deploys its Workers with
+(below).
+
 agentshed is the first app with both (agentshed ADR-0031,
 `docs/specs/mac-distribution.md`, `docs/specs/landing-page.md`); JustSnap has
 both too, and its landing page's build settings are in `site/README.md` of the
@@ -115,6 +118,10 @@ here needs one in `release_mirrors` too. The zone ID is a secret rather than
 a variable because the PAT holds secrets permission only. Terraform owns
 both secrets, as it does the `R2_*` ones.
 
+The stack also outputs each entry's zone ID and release bucket
+(`download_counts`) and its token (`download_count_tokens`, sensitive). The
+`workers` stack binds them to the app's download count Worker, if it has one.
+
 agentshed is the first entry (agentshed ADR-0055, `docs/specs/landing-page.md`,
 REQ-011).
 
@@ -125,11 +132,34 @@ REQ-011).
 2. Add an entry to `download_counts` in `download-counts.tf`.
 3. Open a pull request, merge it, and approve Plan and then Apply in the
    `Terraform apps` run. The plan should add the new entry's 3 resources and
-   change nothing else.
+   its values in the two outputs, and change nothing else.
 4. Check that `gh secret list -R aloong-planet/<repository>` lists
    `CF_ANALYTICS_API_TOKEN` and `CF_ZONE_ID`.
 
-Removing an entry destroys that app's token and its two secrets.
+Removing an entry destroys that app's token and its two secrets. If the app
+has a Worker in the `workers` stack, remove that first: its plan fails once
+the entry is gone from the outputs.
+
+## The Workers deploy token
+
+`workers-deploy-token.tf` mints it, through `modules/workers-deploy-token`:
+
+| Resource | Details |
+|---|---|
+| Account API token `workers-deploy` | Workers Scripts Write on the account, nothing else |
+
+The stack outputs its value as `workers_deploy_token` (sensitive), and the
+`workers` stack's Cloudflare provider authenticates with it, read from this
+stack's state. It is never written anywhere as a secret, and the production
+environment's own token keeps no Workers permission. A permission is added
+here only when a `workers` plan or apply reports it is missing, naming the
+step that needs it.
+
+The token's test (`tests/workers-deploy-token.tftest.hcl`) plans the module
+with a stand-in permission group. Nothing tests that the lookup in
+`workers-deploy-token.tf` finds the account-level Workers Scripts Write group:
+Terraform's mocks give a computed list, such as the lookup's result, no
+element, so no test can plan this stack.
 
 ## Landing pages
 
