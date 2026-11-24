@@ -1,0 +1,43 @@
+name: Terraform workers
+
+# The workers stack (stacks/workers). Plan and apply are in
+# terraform-stack.yml. The stack uses no module, so module changes do not
+# start it. Its plan reads the apps stack's outputs from apps' state, so
+# when both change, apply apps first.
+on:
+  push:
+    branches: [main]
+    paths:
+      - stacks/workers/**.tf
+      - stacks/workers/.terraform.lock.hcl
+      - scripts/**
+      - .tool-versions
+      - .github/workflows/terraform-workers.yml
+      - .github/workflows/terraform-stack.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Runs of a stack are serialized, so one run's Plan and Apply never interleave
+# with another's.
+concurrency:
+  group: terraform-workers
+  cancel-in-progress: false
+
+jobs:
+  workers:
+    uses: ./.github/workflows/terraform-stack.yml
+    # The production environment, as for apps: it holds the state backend's
+    # credentials, which also read apps' state.
+    with:
+      stack: workers
+      environment: production
+    # Passed by name, so the stack gets these and nothing else. They exist only
+    # in the production environment, which the called jobs run in. Neither the
+    # Cloudflare token nor the GitHub token is passed: the stack deploys with
+    # the Workers token it reads from apps' state.
+    secrets:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      STATE_R2_ACCESS_KEY_ID: ${{ secrets.STATE_R2_ACCESS_KEY_ID }}
+      STATE_R2_SECRET_ACCESS_KEY: ${{ secrets.STATE_R2_SECRET_ACCESS_KEY }}

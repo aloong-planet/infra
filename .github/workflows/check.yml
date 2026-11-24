@@ -58,3 +58,20 @@ jobs:
             terraform -chdir="$dir" validate -no-color
             echo "::endgroup::"
           done
+
+      # Every stack with tests under tests/ runs them, against mock providers
+      # and without credentials; the workers stack's tests fetch its modules
+      # from GitHub. The job keeps its name, which the main ruleset requires.
+      - name: terraform test, per stack with tests
+        run: |
+          shopt -s nullglob
+          for dir in stacks/*/; do
+            tests=("$dir"tests/*.tftest.hcl)
+            if (( ${#tests[@]} == 0 )); then
+              continue
+            fi
+            stack="$(basename "$dir")"
+            echo "::group::$stack"
+            terraform -chdir="$dir" test -no-color
+            echo "::endgroup::"
+          done
