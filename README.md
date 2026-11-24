@@ -87,7 +87,7 @@ Cloudflare account, zone and token IDs.
 
 1. **Pull request.** The `Check` workflow runs `terraform fmt -check` and
    `terraform validate` on every stack, and `terraform test` on every stack
-   with a `tests/` directory, without any credentials. It also fails if a
+   with test files in `tests/`, without any credentials. It also fails if a
    stack has no `terraform-<stack>.yml` workflow.
 2. **Merge to `main`.** The `Terraform <stack>` workflow of each stack whose
    Terraform files changed starts. A change to a script starts every stack's,

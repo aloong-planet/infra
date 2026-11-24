@@ -58,7 +58,8 @@ there too.
 
 When a hash is wrong, that test fails in the pull request's `Check` run, and
 its output gives the fetched content's hash beside the pinned one. In a
-Plan's log `scripts/redact.sh` hides both, along with the commit.
+Plan's log `scripts/redact.sh` replaces every 32-character hex run, so each
+hash shows as `<id><id>` and the commit as `<id>` and its last 8 characters.
 
 ### Accepting a gap
 
