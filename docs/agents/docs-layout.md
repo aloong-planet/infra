@@ -10,13 +10,10 @@ Where this repository's documents live, and which of them can be relied on.
 |---|---|---|
 | `docs/CONTEXT.md` | What a term means exactly, and which synonyms to avoid | `/domain-modeling` |
 | `docs/adr/` | Why something was decided, and what was rejected | `/domain-modeling` |
-| `docs/specs/<slug>.md` | Which boundaries a feature has worked through, and what it explicitly does not do | `/to-spec` |
-| `docs/features/<slug>.md` | The behavior users can see in the current version | `/features-catalog` |
+| `docs/specs/<slug>.md` | What a feature does in the current version, which boundaries it has worked through, and what it explicitly does not do | `/to-spec` |
 | `docs/prototypes/` | What interfaces and state models look like | `/prototype` |
 | `docs/postmortems/` | The causal chain of an incident | `/implement`, step 7 |
 | `docs/ops/` | This project's runbooks (the actual values for signing, releases and so on) | Each project |
-
-`docs/specs/` and `docs/features/` **share slugs one to one**: if features has `memory-view.md`, the spec is `docs/specs/memory-view.md`.
 
 **Process** answers "how it was done at the time":
 
