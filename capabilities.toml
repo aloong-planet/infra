@@ -16,5 +16,8 @@ enabled = false
 [mutation-testing]
 enabled = false
 
+[docs-auto-merge]
+enabled = false
+
 [theming]
 enabled = false
