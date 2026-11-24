@@ -43,7 +43,7 @@ The zone stack declares the aloongplanet.com zone's Browser Cache TTL as 0 (Resp
 
 ### zone-settings::CON-001 Zone settings permissions stay narrow (direct acceptance)
 
-Applies to: the production environment's Cloudflare token and both stacks. The token gains only Zone Settings Read and Zone Settings Edit, on the aloongplanet.com zone only; none of its other permissions change. Only the zone stack declares zone settings, and the apps stack still only reads the zone.
+Applies to: the production environment's Cloudflare token and the apps and zone stacks. The token gains only Zone Settings Read and Zone Settings Edit, on the aloongplanet.com zone only; none of its other permissions change. Only the zone stack declares zone settings, and the apps stack still only reads the zone.
 
 ### zone-settings::CON-002 One setting only (direct acceptance)
 
@@ -104,7 +104,7 @@ Content brought in from elsewhere: the stack loads no external content into anyt
 
 ## Testing Decisions
 
-- The repository has no test runner, and adding one for this change is out of scope. The existing gates for Terraform changes are the prior art. The Check workflow runs `fmt` and `validate` on every stack, and fails a stack that has no workflow. The apply script refuses a plan that differs from the approved one, and fails unless a follow-up plan is empty.
+- The existing gates for Terraform changes are the prior art. The Check workflow runs `fmt` and `validate` on every stack, and fails a stack that has no workflow. The apply script refuses a plan that differs from the approved one, and fails unless a follow-up plan is empty.
 - Seams:
   - The Check workflow, for the new stack's formatting and validity.
   - A local plan of the zone stack with the production credentials, before merging: exactly one import, the value change, and nothing else (zone-settings::US-002/AC-01).
