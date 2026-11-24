@@ -93,14 +93,13 @@ Content brought in from elsewhere: the stack loads no external content into anyt
 
 ## Implementation Decisions
 
-- A new stack root beside `apps`, with the Cloudflare provider only: no GitHub provider and no input variables. The zone is looked up by name, as in the apps stack, so its ID never appears in the repository.
-- The setting is imported with an import block. Its ID is built from the looked-up zone ID and the setting's name, so the first plan shows the current value rather than a blind create. The block stays in place: once the setting is in state it does nothing, and it re-imports the setting if the state is ever lost.
+- A new stack root beside `apps`, with the Cloudflare provider only: no GitHub provider and no input variables. The zone is looked up by name, as in the apps stack; its ID does not appear in the repository.
+- The setting is imported with an import block. Its ID is built from the looked-up zone ID and the setting's name. The block stays in place: once the setting is in state it does nothing, and it re-imports the setting if the state is ever lost.
 - No module: one resource, in a file named for what it does.
-- The stack's workflow has the apps workflow's shape. It runs on changes to the stack's own Terraform and lock files, the scripts, the Terraform version file, its own workflow and the shared stack workflow. It does not run on module changes, because it uses no module. It runs in the `production` environment and passes only the account ID, the two state credentials and the Cloudflare token.
-- The provider is locked to the same release as the apps stack, so both stacks run the version whose behaviour this spec was checked against.
+- The stack's workflow has the apps workflow's shape. It runs on changes to the stack's own Terraform and lock files, the scripts (not the scripts' own tests), the Terraform version file, its own workflow and the shared stack workflow. It does not run on module changes. It runs in the `production` environment and passes only the account ID, the two state credentials and the Cloudflare token.
+- The provider is locked to the same release as the apps stack.
 - Credentials: the owner adds Zone Settings Read and Edit, on aloongplanet.com only, to the existing production token in the Cloudflare dashboard; editing permissions keeps the token's value. There is no new token, environment, env file or credentials-script change.
 - The repository README says that the zone stack is the only place zone settings are declared, and only this one.
-- No ADR: the decision is cheap to reverse (one value), so it does not meet the ADR bar. Its reasons live here and in the zone stack's README.
 
 ## Testing Decisions
 

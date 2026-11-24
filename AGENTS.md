@@ -11,3 +11,7 @@ Tickets are this repository's GitHub Issues. See `docs/agents/issue-tracker.md`.
 ### Documentation layout
 
 This repository uses one documentation context. See `docs/agents/docs-layout.md`.
+
+## Invariants
+
+- Never build an import ID from a secret other than the 32-hex IDs `scripts/redact.sh` masks (`scripts/plan.sh`).

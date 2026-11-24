@@ -75,3 +75,18 @@ jobs:
             terraform -chdir="$dir" test -no-color
             echo "::endgroup::"
           done
+
+      # The scripts' tests under scripts/tests/ plan throwaway configurations
+      # with the random provider and local state, without credentials; what they
+      # apply goes only to that local state.
+      - name: scripts tests
+        run: |
+          shopt -s nullglob
+          tests=(scripts/tests/*.sh)
+          if (( ${#tests[@]} == 0 )); then
+            echo "::error::No scripts tests found under scripts/tests/"
+            exit 1
+          fi
+          for test in "${tests[@]}"; do
+            bash "$test"
+          done
