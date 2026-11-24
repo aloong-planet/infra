@@ -91,8 +91,8 @@ Cloudflare account, zone and token IDs.
    `terraform validate` on every stack, and `terraform test` on every stack
    with test files in `tests/`, without any credentials. It also runs the
    scripts' tests in `scripts/tests/`, which plan throwaway configurations
-   with no credentials. It fails if a stack has no `terraform-<stack>.yml`
-   workflow.
+   with no credentials and apply only to their local state. It fails if a
+   stack has no `terraform-<stack>.yml` workflow.
 2. **Merge to `main`.** The `Terraform <stack>` workflow of each stack whose
    Terraform files changed starts. A change to a script starts every stack's
    (a change only to the scripts' tests in `scripts/tests/` starts none), and
