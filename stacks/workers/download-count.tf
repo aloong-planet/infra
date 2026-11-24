@@ -26,7 +26,9 @@ locals {
   }
 
   download_count_settings = data.terraform_remote_state.apps.outputs.download_counts["agentshed"]
-  download_count_token    = data.terraform_remote_state.apps.outputs.download_count_tokens["agentshed"]
+
+  # Sensitive again: apps' state does not keep the mark (apps.tf).
+  download_count_token = sensitive(data.terraform_remote_state.apps.outputs.download_count_tokens["agentshed"])
 }
 
 data "http" "download_count_module" {

@@ -140,3 +140,20 @@ run "the_worker_is_bound_scheduled_and_kept_off_workers_dev" {
     error_message = "The Worker or its previews are reachable on workers.dev."
   }
 }
+
+# The stand-ins above are plain values, as apps' sensitive outputs are when
+# read through terraform_remote_state, so the mark has to come from this
+# stack.
+run "the_tokens_read_from_apps_state_stay_sensitive" {
+  command = plan
+
+  assert {
+    condition     = issensitive(local.download_count_token)
+    error_message = "agentshed's analytics token, read from apps' state, is not sensitive: a plan would print it."
+  }
+
+  assert {
+    condition     = issensitive(local.workers_deploy_token)
+    error_message = "The Workers deploy token, read from apps' state, is not sensitive: a plan would print it."
+  }
+}

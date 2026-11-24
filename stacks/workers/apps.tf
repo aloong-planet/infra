@@ -19,3 +19,14 @@ data "terraform_remote_state" "apps" {
     skip_s3_checksum            = true
   }
 }
+
+# terraform_remote_state does not keep an output's sensitive mark: a
+# sensitive output of apps reads here as a plain value, and a plan or show
+# that reaches it prints it in plain text (measured with Terraform 1.16.6).
+# So both tokens are read through locals that mark them sensitive again, this
+# one and download_count_token in download-count.tf; anything else that needs
+# a token reads it through them. download_counts is left unmarked, so a plan
+# shows the bucket and zone.
+locals {
+  workers_deploy_token = sensitive(data.terraform_remote_state.apps.outputs.workers_deploy_token)
+}

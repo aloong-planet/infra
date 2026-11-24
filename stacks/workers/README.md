@@ -83,7 +83,9 @@ agentshed's runbook.
 provider and stand-ins for apps' outputs, with the modules fetched for real.
 It checks that the pinned modules are what is uploaded, that either module
 with other content is refused, and the bindings, schedule and workers.dev
-setting. It does not show which token the provider uses, or whether
-Cloudflare accepts the upload. A Plan does not show them either: the
+setting. It also checks that both tokens read from apps' state are
+sensitive: the state does not keep apps' sensitive mark, so this stack marks
+them again (`apps.tf`). It does not show which token the provider uses, or
+whether Cloudflare accepts the upload. A Plan does not show them either: the
 provider does not check its token, and planning new resources calls no API.
 The first Apply shows both.

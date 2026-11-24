@@ -3,5 +3,5 @@
 # environment's token has no Workers permission, and this stack's workflow
 # does not pass it.
 provider "cloudflare" {
-  api_token = data.terraform_remote_state.apps.outputs.workers_deploy_token
+  api_token = local.workers_deploy_token
 }
