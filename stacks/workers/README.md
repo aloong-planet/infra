@@ -21,6 +21,11 @@ ships, credentials and running locally.
 | Cron Trigger | Minute 31 of every hour |
 | workers.dev setting | Off, previews included: the Worker answers no request |
 
+The provider warns that it cannot destroy the Cron Trigger: "If you create
+this resource, it will be present in the API until manually deleted." Whoever
+removes the Worker from this stack checks in Cloudflare that its schedule is
+gone too.
+
 Its bindings are the ones agentshed's `docs/ops/download-count.md` lists
 ("The Worker in the shadow period"), with these values:
 
@@ -51,12 +56,18 @@ shasum -a 256 scripts/download-count-worker.mjs scripts/download-count-core.mjs
 `tests/download-count.tftest.hcl` writes the same hashes out, so change them
 there too.
 
+When a hash is wrong, that test fails in the pull request's `Check` run, and
+its output gives the fetched content's hash beside the pinned one. In a
+Plan's log `scripts/redact.sh` hides both, along with the commit.
+
 ### Accepting a gap
 
 When every run fails because its cursor is older than the analytics hold
 (agentshed's runbook, "A stalled Worker count"), a pull request adds a
-binding `ACCEPT_GAP_FROM`, plain text, set to that cursor. The next run
-accepts the gap. The pull request after that removes the binding again.
+binding `ACCEPT_GAP_FROM`, plain text, set to that cursor, and adds it to
+the bindings `tests/download-count.tftest.hcl` expects; otherwise `Check`
+fails. The next run accepts the gap. The pull request after that removes the
+binding again, from both.
 
 ### After an apply
 
@@ -69,7 +80,9 @@ agentshed's runbook.
 
 `tests/download-count.tftest.hcl` plans the stack against a mock Cloudflare
 provider and stand-ins for apps' outputs, with the modules fetched for real.
-It checks that the pinned modules are what is uploaded, that a module with
-other content is refused, and the bindings, schedule and workers.dev setting.
-It does not show which token the provider uses, or whether Cloudflare
-accepts the upload: the first Plan and Apply do.
+It checks that the pinned modules are what is uploaded, that either module
+with other content is refused, and the bindings, schedule and workers.dev
+setting. It does not show which token the provider uses, or whether
+Cloudflare accepts the upload. A Plan does not show them either: the
+provider does not check its token, and planning new resources calls no API.
+The first Apply shows both.

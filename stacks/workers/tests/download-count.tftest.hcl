@@ -7,8 +7,9 @@
 #
 # Not covered here:
 # - Which token the provider authenticates with: a provider block is not
-#   observable in a test. A wrong wiring shows at the first Plan, because the
-#   production environment's token has no Workers permission.
+#   observable in a test, and a Plan does not show it either, because the
+#   provider does not check its token and planning new resources calls no
+#   API. A wrong wiring shows at the first Apply.
 # - Whether Cloudflare accepts the upload, the Cron Trigger and the workers.dev
 #   setting: only the Apply shows it.
 
@@ -65,7 +66,24 @@ run "the_pinned_modules_are_deployed" {
   }
 }
 
-run "a_fetched_module_with_other_content_is_refused" {
+run "a_fetched_main_module_with_other_content_is_refused" {
+  command = plan
+
+  override_data {
+    target = data.http.download_count_module["download-count-worker.mjs"]
+    values = {
+      status_code          = 200
+      response_body        = "export default {}\n"
+      response_body_base64 = "ZXhwb3J0IGRlZmF1bHQge30K"
+    }
+  }
+
+  expect_failures = [
+    data.http.download_count_module["download-count-worker.mjs"],
+  ]
+}
+
+run "a_fetched_core_module_with_other_content_is_refused" {
   command = plan
 
   override_data {
