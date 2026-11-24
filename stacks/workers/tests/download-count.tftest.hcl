@@ -21,10 +21,12 @@ override_data {
       workers_deploy_token = "stand-in-deploy-token"
       download_counts = {
         agentshed = {
-          analytics_token = "stand-in-analytics-token"
-          zone_id         = "00000000000000000000000000000002"
-          bucket          = "stand-in-bucket"
+          zone_id = "00000000000000000000000000000002"
+          bucket  = "stand-in-bucket"
         }
+      }
+      download_count_tokens = {
+        agentshed = "stand-in-analytics-token"
       }
     }
   }

@@ -26,6 +26,7 @@ locals {
   }
 
   download_count_settings = data.terraform_remote_state.apps.outputs.download_counts["agentshed"]
+  download_count_token    = data.terraform_remote_state.apps.outputs.download_count_tokens["agentshed"]
 }
 
 data "http" "download_count_module" {
@@ -74,7 +75,7 @@ resource "cloudflare_workers_script" "download_count" {
     {
       name = "CF_ANALYTICS_API_TOKEN"
       type = "secret_text"
-      text = local.download_count_settings.analytics_token
+      text = local.download_count_token
     },
     {
       name = "CF_ZONE_ID"
