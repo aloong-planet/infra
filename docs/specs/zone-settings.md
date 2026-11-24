@@ -2,17 +2,15 @@
 
 ## Problem Statement
 
-Browsers keep static files from every site in the aloongplanet.com zone for 4 hours, whatever the site itself asks for. Cloudflare's zone-wide Browser Cache TTL defaults to 4 hours and replaces any shorter `max-age` an origin sends. The Pages projects in the zone send `public, max-age=0, must-revalidate`, so on their custom domains a stylesheet goes out with `max-age=14400`, while the HTML that links to it is always checked again.
+Cloudflare's zone-wide Browser Cache TTL replaces any shorter `max-age` an origin sends, and its default is 4 hours. The Pages projects in the zone send `public, max-age=0, must-revalidate`, so at the default their static files would go out on their custom domains with `max-age=14400`, while the HTML that links to them is always checked again.
 
-After a deploy that changes the personal homepage's stylesheet together with its pages, a visitor from the previous 4 hours gets the new pages with the old stylesheet, and the layout breaks until the copy expires or the visitor forces a reload. Every later deploy that changes the stylesheet opens the same window.
-
-The setting is not in Terraform. The apps stack reads the zone but leaves its settings alone, and its token cannot even read them.
+After a deploy that changes the personal homepage's stylesheet together with its pages, a visitor from the previous 4 hours would get the new pages with the old stylesheet, and the layout would break until the copy expires or the visitor forces a reload. Every later deploy that changes the stylesheet would open the same window.
 
 ## Solution
 
 A new `zone` stack declares the zone's Browser Cache TTL as 0, which Cloudflare calls "Respect Existing Headers". Every host in the zone then passes on the Cache-Control its origin sends.
 
-The stack has its own state and workflow, apart from the apps stack, so a change to one never plans changes in the other. It runs in the same `production` environment with the same token. That token gains Zone Settings Read and Edit on the zone, and nothing else changes. Plan and Apply wait for the owner's approval, as they do for every stack, and local runs use the same env file as the apps stack.
+The stack has its own state and workflow, apart from the apps stack, so a change to one never plans changes in the other. It runs in the same `production` environment with the same token. That token has Zone Settings Read and Edit on the zone. Plan and Apply wait for the owner's approval, as they do for every stack, and local runs use the same env file as the apps stack.
 
 ## User Stories
 
@@ -26,7 +24,7 @@ As the owner of the personal homepage, I want a deploy that changes the styleshe
 
 As the owner, I want the zone's Browser Cache TTL in Terraform, so that a change to it ships through a pull request and an approved plan, and a change made anywhere else shows up.
 
-- zone-settings::US-002/AC-01: The zone stack's first plan imports the zone's existing Browser Cache TTL and shows one change, from its current value to 0, and nothing else.
+- zone-settings::US-002/AC-01: With an empty state, the zone stack's plan imports the zone's existing Browser Cache TTL, changes its value to 0 only if it is not 0 already, and shows nothing else.
 - zone-settings::US-002/AC-02: After Apply, the follow-up plan has no changes.
 - zone-settings::US-002/AC-03: When the setting has been changed outside Terraform, the next run of the zone stack's workflow plans it back to 0.
 - zone-settings::US-002/AC-04: The zone stack's Plan and Apply each wait for the owner's approval in the `production` environment, which accepts deployments from `main` only.
@@ -53,39 +51,33 @@ Applies to: the zone stack. It has its own state key, named after the stack, in 
 
 ## Failure modes and boundaries
 
-Setting up:
+Plan and Apply:
 
-- The production token does not yet have the Zone Settings permissions: Plan fails at the import with Cloudflare's authentication error, and nothing changes.
-- The shared stack workflow always sets the GitHub token and the account ID as Terraform variables. The zone stack declares neither, and Terraform ignores environment values for variables a configuration does not declare. The zone stack's workflow does not pass the GitHub token at all.
-
-Merging:
-
-- The change that adds the stack starts only the zone stack's workflow. The apps stack's files, the modules and the scripts are unchanged, so the apps workflow does not start.
 - A Plan is approved, then the setting is changed in the dashboard before Apply: Apply plans again, finds a different fingerprint and stops without changing anything. Run the workflow again.
 - Apply sets the value, but the follow-up plan still has changes (for example, Cloudflare returns the value in another form): Apply fails after the state snapshot, and the difference is investigated before another run.
-- Cloudflare rejects the value: Plan passes, because the setting's value has no fixed type in the provider, and Apply fails with Cloudflare's error after the state snapshot.
+- Cloudflare rejects the value: Plan passes and Apply fails with Cloudflare's error after the state snapshot.
 
-After Apply:
+Reach of the setting:
 
-- A browser that stored a file with the 4-hour lifetime before the change keeps it until that copy expires, at most 4 hours. Only responses after the change carry the origin's header.
-- Transfer and agentshed rename their static files on every build, so they never had the stale-stylesheet problem. Their files are now checked again on every visit, and answered 304 when unchanged, instead of being kept for 4 hours. The pages still display correctly. A long cache for those files belongs in their own projects.
-- Download hosts: a file that sets its own longer Cache-Control is unaffected; `dl.aloongplanet.com` sets one year, immutable. A file without a Cache-Control header gets none from Cloudflare, and browsers fall back to their own heuristics. `dl.agentshed.aloongplanet.com` was not sampled.
-- The setting changes only what browsers are told. Cloudflare's own edge caching of these files is unchanged.
+- A browser that stored a file under a 4-hour lifetime keeps that copy until it expires, at most 4 hours. Only responses served after an Apply carry the origin's header.
+- Transfer and agentshed: their files are checked again on every visit and answered 304 when unchanged.
+- Download hosts: a file without a Cache-Control header gets none from Cloudflare, and browsers fall back to their own heuristics.
+- The setting changes only what browsers are told; it does not affect Cloudflare's own edge caching of these files.
 
 Drift and removal:
 
-- A change made in the dashboard is not noticed until the zone stack's workflow runs. A manual run is the drift check, and it plans the value back to 0 (zone-settings::US-002/AC-03).
-- Removing the setting from the configuration leaves the zone at 0, because the provider's delete does nothing. To go back to 4 hours, set the value to 14400 and apply.
-- If the stack's state is lost or recreated, the import brings the setting back into state instead of failing.
+- A change made in the dashboard: zone-settings::US-002/AC-03 applies.
+- Removing the setting from the configuration leaves the zone at 0. To go back to 4 hours, set the value to 14400 and apply.
+- If the stack's state is lost or recreated, zone-settings::US-002/AC-01 applies.
 
 Credentials:
 
-- The production token now can change any setting of the zone, not only this one. Only the zone stack's reviewed configuration uses that, and the token already had DNS Write on the zone, so a leaked token reached every host before this change too.
-- A local run of the zone stack reads the same env file as the apps stack. The GitHub token in it is passed as a variable the zone stack does not declare, and is ignored.
+- The production token can change any setting of the zone, not only this one, and it can also write DNS records in the zone, so a leaked token reaches every host in it.
+- In a local run of the zone stack, the env file's GitHub token is passed as a variable the zone stack does not declare, and is ignored.
 
 Running at the same time:
 
-- Zone and apps runs use separate concurrency groups, state keys and lockfiles, so they do not wait on or interfere with each other. Both run in the `production` environment, and each job still waits for its own approval.
+- Zone and apps runs at the same time: zone-settings::CON-003 and zone-settings::US-002/AC-04 apply.
 
 Content brought in from elsewhere: the stack loads no external content into anything a person interacts with, so no boundary of this kind applies.
 
@@ -96,7 +88,7 @@ Content brought in from elsewhere: the stack loads no external content into anyt
 - No module: one resource, in a file named for what it does.
 - The stack's workflow has the apps workflow's shape. It runs on changes to the stack's own Terraform and lock files, the scripts (not the scripts' own tests), the Terraform version file, its own workflow and the shared stack workflow. It does not run on module changes. It runs in the `production` environment and passes only the account ID, the two state credentials and the Cloudflare token.
 - The provider is locked to the same release as the apps stack.
-- Credentials: the owner adds Zone Settings Read and Edit, on aloongplanet.com only, to the existing production token in the Cloudflare dashboard; editing permissions keeps the token's value. There is no new token, environment, env file or credentials-script change.
+- Credentials: the zone stack uses the existing production token, which has Zone Settings Read and Edit on aloongplanet.com only. It has no token, environment, env file or credentials script of its own.
 - The repository README says that the zone stack is the only place zone settings are declared, and only this one.
 
 ## Testing Decisions
@@ -104,9 +96,9 @@ Content brought in from elsewhere: the stack loads no external content into anyt
 - The existing gates for Terraform changes are the prior art. The Check workflow runs `fmt` and `validate` on every stack, and fails a stack that has no workflow. The apply script refuses a plan that differs from the approved one, and fails unless a follow-up plan is empty.
 - Seams:
   - The Check workflow, for the new stack's formatting and validity.
-  - A local plan of the zone stack with the production credentials, before merging: exactly one import, the value change, and nothing else (zone-settings::US-002/AC-01).
+  - A plan of the zone stack against an empty state, with the production credentials (zone-settings::US-002/AC-01).
   - The workflow's Apply and follow-up plan (zone-settings::US-002/AC-02).
-  - Read-only HEAD requests after Apply: to the homepage's three hosts (zone-settings::US-001/AC-01), and to Transfer and agentshed (the boundaries above).
+  - Read-only HEAD requests after Apply: to the homepage's hosts (zone-settings::US-001/AC-01), and to Transfer and agentshed (the boundaries above).
   - The production environment's protection rules, read back from the GitHub API (zone-settings::US-002/AC-04).
 
 ## Out of Scope
@@ -121,17 +113,13 @@ Content brought in from elsewhere: the stack loads no external content into anyt
 
 ## Further Notes
 
-Facts this spec rests on, checked on 2026-11-07:
+Facts this spec rests on:
 
-- Cloudflare's Browser Cache TTL documentation: the default is 4 hours on every plan, and Cloudflare overrides an origin's cache expiration that is shorter than the setting.
-- Cloudflare's zone settings API: "Setting a TTL of 0 is equivalent to selecting Respect Existing Headers". Reading and editing the setting take Zone Settings Read and Zone Settings Write.
-- Cloudflare provider 5.28.0:
-  - `cloudflare_zone_setting` takes a zone ID, a setting ID and a value;
+- Cloudflare's Browser Cache TTL: the default is 4 hours on every plan; Cloudflare overrides an origin's cache expiration that is shorter than the setting; with "Respect Existing Headers" it neither overrides nor inserts a Cache-Control header unless a cache rule says so (Cloudflare's documentation source, read 2026-11-25).
+- Cloudflare's zone settings API: "Setting a TTL of 0 is equivalent to selecting `Respect Existing Headers` and is allowed for all plans" (the API's field description in Cloudflare's Go SDK, read 2026-11-25).
+- Cloudflare provider 5.28.0, the locked release:
+  - `cloudflare_zone_setting` takes a zone ID, a setting ID and a value of no fixed type;
+  - its accepted permissions are Zone Settings Read and Zone Settings Write, the API's names for the dashboard's Zone Settings Read and Zone Settings Edit (Cloudflare's documentation source, read 2026-11-25);
   - its import ID is `<zone_id>/<setting_id>`;
   - its delete does nothing.
-- Terraform 1.16.6 ignores `TF_VAR_` environment values for variables a configuration does not declare, without a warning.
-- Response headers on 2026-11-07:
-  - on the `pages.dev` hosts, every file is served with `max-age=0`;
-  - on the custom domains, static files are served with `max-age=14400` and HTML with `max-age=0`;
-  - `dl.aloongplanet.com` downloads are served with `max-age=31536000, immutable`.
-- The first plan of the zone stack, on 2026-11-07, read the current value: 14400, the 4-hour default.
+- Terraform 1.16.6, the pinned version, ignores `TF_VAR_` environment values for variables a configuration does not declare, without a warning (tested with a throwaway configuration, 2026-11-25).

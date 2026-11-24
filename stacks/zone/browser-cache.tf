@@ -10,9 +10,10 @@ resource "cloudflare_zone_setting" "browser_cache_ttl" {
   value      = 0
 }
 
-# The setting exists before Terraform manages it, so it is imported and the
-# first plan shows its current value changing to 0. Once the setting is in state
-# this does nothing; it imports the setting again if the state is ever lost.
+# The setting exists before Terraform manages it, so it is imported. With an
+# empty state, the plan shows its value changing to 0 only if it is not 0
+# already. Once the setting is in state this does nothing; it imports the
+# setting again if the state is ever lost.
 # Removing the resource would leave the zone as it is, because the provider's
 # delete does nothing: to go back to 4 hours, set the value to 14400.
 import {
