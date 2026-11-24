@@ -75,3 +75,12 @@ jobs:
             terraform -chdir="$dir" test -no-color
             echo "::endgroup::"
           done
+
+      # The scripts' tests under tests/ plan throwaway configurations with the
+      # random provider and local state, without credentials, and never apply.
+      - name: scripts tests
+        run: |
+          shopt -s nullglob
+          for test in tests/*.sh; do
+            bash "$test"
+          done
