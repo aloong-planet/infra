@@ -76,11 +76,12 @@ jobs:
             echo "::endgroup::"
           done
 
-      # The scripts' tests under tests/ plan throwaway configurations with the
-      # random provider and local state, without credentials, and never apply.
+      # The scripts' tests under scripts/tests/ plan throwaway configurations
+      # with the random provider and local state, without credentials; what they
+      # apply goes only to that local state.
       - name: scripts tests
         run: |
           shopt -s nullglob
-          for test in tests/*.sh; do
+          for test in scripts/tests/*.sh; do
             bash "$test"
           done

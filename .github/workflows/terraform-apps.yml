@@ -9,6 +9,7 @@ on:
       - stacks/apps/.terraform.lock.hcl
       - modules/**.tf
       - scripts/**
+      - '!scripts/tests/**'
       - .tool-versions
       - .github/workflows/terraform-apps.yml
       - .github/workflows/terraform-stack.yml

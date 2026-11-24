@@ -11,6 +11,7 @@ on:
       - stacks/workers/**.tf
       - stacks/workers/.terraform.lock.hcl
       - scripts/**
+      - '!scripts/tests/**'
       - .tool-versions
       - .github/workflows/terraform-workers.yml
       - .github/workflows/terraform-stack.yml

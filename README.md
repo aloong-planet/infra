@@ -22,7 +22,7 @@ stacks/                  one Terraform root each: its own state, credentials, ap
   zone/                  settings of the shared aloongplanet.com zone (stacks/zone/README.md)
   <stack>/tests/         the stack's terraform test files, if it has any
 scripts/                 plan, apply, state snapshots and log redaction, for every stack
-tests/                   tests of the scripts, run by Check without credentials
+  tests/                 tests of the scripts, run by Check without credentials
 .github/workflows/
   check.yml              fmt, validate and the stacks' and scripts' tests on every pull request, without credentials
   terraform-stack.yml    plan and apply for one stack
@@ -90,12 +90,13 @@ Cloudflare account, zone and token IDs.
 1. **Pull request.** The `Check` workflow runs `terraform fmt -check` and
    `terraform validate` on every stack, and `terraform test` on every stack
    with test files in `tests/`, without any credentials. It also runs the
-   scripts' tests in the root `tests/`, which plan throwaway configurations
+   scripts' tests in `scripts/tests/`, which plan throwaway configurations
    with no credentials. It fails if a stack has no `terraform-<stack>.yml`
    workflow.
 2. **Merge to `main`.** The `Terraform <stack>` workflow of each stack whose
-   Terraform files changed starts. A change to a script starts every stack's,
-   and a change to a module starts those of the stacks that use modules (today
+   Terraform files changed starts. A change to a script starts every stack's
+   (a change only to the scripts' tests in `scripts/tests/` starts none), and
+   a change to a module starts those of the stacks that use modules (today
    `apps`). Every job runs in the stack's environment, which needs the owner's
    approval:
    1. Approve **Plan**. The plan appears in the run summary.
