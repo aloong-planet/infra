@@ -1,11 +1,13 @@
 # aloong-planet infra
 
 Terraform for aloong-planet's cloud resources, organized into stacks. Today
-there are two. `apps` manages per-app resources: the R2 release mirrors that
+there are three. `apps` manages per-app resources: the R2 release mirrors that
 apps publish their formal releases to, the apps' landing pages, and read
-access to the zone's analytics for the apps that count their downloads. `zone`
-manages the one setting of the shared `aloongplanet.com` zone that is under
-Terraform, its Browser Cache TTL.
+access to the zone's analytics for the apps that count their downloads. It
+also mints the token the `workers` stack deploys with. `workers` manages
+Cloudflare Workers that run on a schedule: today agentshed's download count
+Worker. `zone` manages the one setting of the shared `aloongplanet.com` zone
+that is under Terraform, its Browser Cache TTL.
 
 ## Layout
 
@@ -13,12 +15,15 @@ Terraform, its Browser Cache TTL.
 modules/                 building blocks, one per capability
   release-mirror/        one app's R2 release mirror and its release secrets
   landing-page/          one app's landing page on Cloudflare Pages, on its domain
+  workers-deploy-token/  the token the workers stack deploys Workers with
 stacks/                  one Terraform root each: its own state, credentials, approvals
   apps/                  per-app resources (stacks/apps/README.md)
+  workers/               scheduled Cloudflare Workers (stacks/workers/README.md)
   zone/                  settings of the shared aloongplanet.com zone (stacks/zone/README.md)
+  <stack>/tests/         the stack's terraform test files, if it has any
 scripts/                 plan, apply, state snapshots and log redaction, for every stack
 .github/workflows/
-  check.yml              fmt and validate on every pull request, without credentials
+  check.yml              fmt, validate and the stacks' tests on every pull request, without credentials
   terraform-stack.yml    plan and apply for one stack
   terraform-<stack>.yml  one per stack: when it runs, and in which environment
 ```
@@ -40,7 +45,8 @@ named for what it does. It starts a new stack only when one of these holds:
 
 | Stack | Manages | Environment | State key |
 |---|---|---|---|
-| `apps` | Per-app resources: R2 release mirrors, landing pages and download counts' analytics tokens | `production` | `infra/terraform.tfstate` |
+| `apps` | Per-app resources: R2 release mirrors, landing pages and download counts' analytics tokens; the Workers deploy token | `production` | `infra/terraform.tfstate` |
+| `workers` | Scheduled Cloudflare Workers: today agentshed's download count Worker | `production` | `workers/terraform.tfstate` |
 | `zone` | Settings of the shared `aloongplanet.com` zone: today only its Browser Cache TTL | `production` | `zone/terraform.tfstate` |
 
 The `apps` key predates the split into stacks and was kept so the state did
@@ -80,8 +86,9 @@ Cloudflare account, zone and token IDs.
 ## How a change ships
 
 1. **Pull request.** The `Check` workflow runs `terraform fmt -check` and
-   `terraform validate` on every stack, without any credentials. It also
-   fails if a stack has no `terraform-<stack>.yml` workflow.
+   `terraform validate` on every stack, and `terraform test` on every stack
+   with a `tests/` directory, without any credentials. It also fails if a
+   stack has no `terraform-<stack>.yml` workflow.
 2. **Merge to `main`.** The `Terraform <stack>` workflow of each stack whose
    Terraform files changed starts. A change to a script starts every stack's,
    and a change to a module starts those of the stacks that use modules (today
@@ -93,6 +100,12 @@ Cloudflare account, zone and token IDs.
       snapshots the state, and fails unless a follow-up plan is empty.
 3. **Drift check.** Run a stack's workflow manually. With nothing to change,
    it stops after Plan.
+
+The `workers` stack's plan reads the `apps` stack's outputs from apps' state.
+When one change touches both, approve apps' Plan and Apply first, then the
+workers' Plan. A workers Plan approved before apps' Apply sees the old
+outputs, or fails on an output that does not exist yet; run its workflow
+again.
 
 Runs of one stack are serialized: while one runs, the newest waiting run
 replaces older waiting ones. A job left unapproved fails after 30 days and
@@ -108,7 +121,8 @@ Only when the criteria above call for one.
    `providers.tf` and, if it takes inputs, `variables.tf`. Run
    `terraform init`, then
    `terraform providers lock -platform=linux_amd64 -platform=darwin_arm64`,
-   and commit `.terraform.lock.hcl`.
+   and commit `.terraform.lock.hcl`. Tests go in `stacks/<stack>/tests/`,
+   where `Check` finds them.
 2. Add `.github/workflows/terraform-<stack>.yml`: a copy of
    `terraform-apps.yml` with the stack's own paths, the concurrency group
    `terraform-<stack>`, its environment, and the secrets it uses. The called
@@ -127,7 +141,7 @@ Only when the criteria above call for one.
 
 Every stack's environment holds `CLOUDFLARE_ACCOUNT_ID` and the `STATE_R2_*`
 values for the state backend, plus what its resources need. Today there is
-one environment, `production`, used by both stacks. These five values have
+one environment, `production`, used by every stack. These five values have
 the same names in the local env file and as its secrets:
 
 | Name | What it is | Scope |
@@ -136,6 +150,12 @@ the same names in the local env file and as its secrets:
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID | |
 | `REPO_SECRETS_TOKEN` | Fine-grained PAT `aloong-planet-infra-secrets`, resource owner `aloong-planet` | Secrets read and write on every repository in `release_mirrors` and `download_counts` (`stacks/apps`, today `agentshed` and `justsnap`). Only the `apps` stack uses it |
 | `STATE_R2_ACCESS_KEY_ID`, `STATE_R2_SECRET_ACCESS_KEY` | S3 credentials derived from the account API token `aloong-planet-tfstate` | Workers R2 Storage Bucket Item Write on `aloong-planet-tfstate` only |
+
+The `workers` stack uses none of the Cloudflare token's permissions, which
+include no Workers permission. It deploys with the account API token
+`workers-deploy`, which the `apps` stack mints with Workers Scripts Write on
+the account only and which the workers stack reads from apps' state. That
+token is not in the env file or in any environment.
 
 The local file is `~/.config/aloong-planet/infra.env` (mode 600, outside the
 repository). To load it into the environment:
@@ -155,8 +175,8 @@ owner can approve their own runs.
 ## Running locally
 
 `scripts/with-credentials.sh` loads the env file and maps it the way the
-workflow does. Run it from the stack's directory, `stacks/apps` or
-`stacks/zone`, and apply only through the workflow.
+workflow does. Run it from the stack's directory, `stacks/<stack>`, and
+apply only through the workflow.
 
 ```sh
 cd stacks/apps
