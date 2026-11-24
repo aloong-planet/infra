@@ -1,8 +1,9 @@
 # R2 release mirrors, one per app (modules/release-mirror). To add an app, add
 # an entry to release_mirrors; this stack's README lists the steps around it.
 #
-# Transfer's bucket, dl.aloongplanet.com and its Pages project live in the same
-# account and zone and are not managed here.
+# Transfer's bucket and dl.aloongplanet.com live in the same account and zone
+# and are not managed here. Its Pages project is the transfer-org entry in
+# landing-pages.tf.
 
 locals {
   release_mirrors = {

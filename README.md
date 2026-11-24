@@ -54,8 +54,9 @@ not have to move; new stacks use `<stack>/terraform.tfstate`.
 
 ### Not managed here
 
-- Transfer's bucket, `dl.aloongplanet.com`, and the `transfer.aloongplanet.com`
-  Pages project and DNS. They share the account and the zone. The only
+- Transfer's bucket and `dl.aloongplanet.com`. They share the account and the
+  zone. Transfer's landing page is managed: the Pages project `transfer-org`
+  on `transfer.aloongplanet.com`, imported into the apps stack. The only
   zone-wide setting declared here is the zone stack's Browser Cache TTL, and
   the only DNS records are the landing pages' own.
 - The personal homepage (`aloongplanet.com`, `www`) and its Pages project. Its

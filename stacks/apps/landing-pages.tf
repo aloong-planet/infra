@@ -2,8 +2,8 @@
 # one, add an entry to landing_pages; this stack's README lists the steps
 # around it.
 #
-# Transfer's Pages project and transfer.aloongplanet.com live in the same
-# account and zone and are not managed here.
+# Transfer's page was made in the dashboard before this stack existed;
+# imports.tf brings its three resources into the state.
 
 locals {
   landing_pages = {
@@ -50,6 +50,25 @@ locals {
       # site/ is a package of its own, with its own lockfile.
       watch_paths = ["site/*"]
       domain      = "justsnap.aloongplanet.com"
+    }
+
+    # Transfer's page. The values are what the project had in the dashboard
+    # when it was imported (infra #16), not new choices, so they differ from
+    # the other entries: the default branch is master, the build is
+    # pnpm install without a frozen lockfile on Node 20, and every push builds
+    # (the watch path is the whole repository). Changing any of them is a
+    # change to the live site.
+    "transfer-org" = {
+      repository        = "transfer"
+      production_branch = "master"
+      root_dir          = "site"
+      build_command     = "pnpm install && pnpm build"
+      output_dir        = "dist"
+      build_env = {
+        NODE_VERSION = "20"
+      }
+      watch_paths = ["*"]
+      domain      = "transfer.aloongplanet.com"
     }
   }
 }

@@ -15,7 +15,8 @@ It also mints the token the `workers` stack deploys its Workers with
 agentshed is the first app with both (agentshed ADR-0031,
 `docs/specs/mac-distribution.md`, `docs/specs/landing-page.md`); JustSnap has
 both too, and its landing page's build settings are in `site/README.md` of the
-`justsnap` repository.
+`justsnap` repository. Transfer has a landing page only, the entry
+`transfer-org`; its release bucket is not managed here.
 
 The stack runs through the `Terraform apps` workflow in the `production`
 environment, and its state key is `infra/terraform.tfstate`. The repository
@@ -176,6 +177,12 @@ requests from forks get no preview deployment. The build settings come from
 the app's own documentation (for agentshed, "Deploying" in `site/README.md`);
 when that changes, change the entry.
 
+Transfer's page, the entry `transfer-org`, was made in the dashboard before
+this stack existed. `imports.tf` brings its project, domain and DNS record
+into the state, and its entry holds the values the project had then, which
+differ from the other entries: the `master` branch, Node 20, `pnpm install`
+without a frozen lockfile, and a build on every push.
+
 ### Connecting a repository
 
 Creating a project fails unless the Cloudflare Workers & Pages GitHub App is
@@ -192,7 +199,7 @@ access in the organization's GitHub Apps settings.
 1. Give the GitHub App access to the app's repository (above).
 2. Add an entry to `landing_pages` in `landing-pages.tf`. The key names the
    project and its `pages.dev` host, which gets a suffix if the name is taken
-   (Transfer's is `transfer-aho.pages.dev`). By convention the domain is
+   (JustSnap's is `justsnap-ceo.pages.dev`). By convention the domain is
    `<app>.aloongplanet.com`. If the app has a release mirror, its
    `allowed_origins` should list `https://<domain>`.
 3. Open a pull request, merge it, and approve Plan and then Apply in the
