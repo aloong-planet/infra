@@ -110,7 +110,7 @@ resource "cloudflare_workers_cron_trigger" "download_count" {
   script_name = cloudflare_workers_script.download_count.script_name
 
   schedules = [{
-    cron = "32 * * * *"
+    cron = "31 * * * *"
   }]
 }
 
