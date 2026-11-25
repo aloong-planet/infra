@@ -1,5 +1,7 @@
 # One app's landing page: a Cloudflare Pages project that builds a directory of
-# the app's repository on every push, served on the app's own domain.
+# the app's repository on every push, served on the app's own domain. With
+# git_builds_enabled false it builds nothing, and something else uploads its
+# deployments.
 #
 # Creating the project fails unless the Cloudflare Workers & Pages GitHub App
 # is installed on the repository's owner with access to the repository.
@@ -21,6 +23,12 @@ resource "cloudflare_pages_project" "this" {
       production_branch = var.production_branch
       # Build watch paths: a push that changes none of these skips the build.
       path_includes = var.watch_paths
+      # Off is what Cloudflare's documentation calls disabling automatic
+      # deployments: "Enable automatic production branch deployments" off and
+      # the preview branches set to "None":
+      # https://developers.cloudflare.com/pages/configuration/git-integration/#disable-automatic-deployments
+      production_deployments_enabled = var.git_builds_enabled
+      preview_deployment_setting     = var.git_builds_enabled ? "all" : "none"
     }
   }
 
