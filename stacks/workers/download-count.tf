@@ -10,18 +10,18 @@
 # both hashes here in one pull request (this stack's README).
 
 locals {
-  agentshed_commit = "0c3a509afdcdf084ca9f7b3fb3b0d6cd843974c1"
+  agentshed_commit = "ba48d34e0a559793ab3f2037cb686438de3f5caf"
 
   # Keyed by the name each module is uploaded under, which is the name the
   # main module imports the core by.
   download_count_modules = {
     "download-count-worker.mjs" = {
       path   = "scripts/download-count-worker.mjs"
-      sha256 = "5ffbd0e003145ba42b08aa5be22af6eddf295dcb913d5a75e12c2cbcd96aa5ef"
+      sha256 = "dd7b3a6732785548c3296f04a469b560e7558f9de07337e9f5eb97255ea70d89"
     }
     "download-count-core.mjs" = {
       path   = "scripts/download-count-core.mjs"
-      sha256 = "730b4b71fa4b591483060c5ece324f8c431f2ccfa4eb817f6f8fee97462465b5"
+      sha256 = "e8af321bd2ce9d65380c063f8f74f90251b5db02b0c531c7ff5263b9108d496b"
     }
   }
 
@@ -68,6 +68,8 @@ resource "cloudflare_workers_script" "download_count" {
 
   # The settings agentshed's runbook lists. ACCEPT_GAP_FROM is added only by a
   # pull request that accepts a stalled count's gap, and removed by the next.
+  # RELEASES_READ_TOKEN is the read-only GitHub token the Worker reads GitHub's
+  # releases with (agentshed ADR-0057), from the production environment.
   bindings = [
     {
       name        = "BUCKET"
@@ -100,7 +102,35 @@ resource "cloudflare_workers_script" "download_count" {
       type = "plain_text"
       text = "aloong-planet/agentshed"
     },
+    {
+      name = "RELEASES_READ_TOKEN"
+      type = "secret_text"
+      text = var.releases_read_token
+    },
   ]
+
+  # The token's checks are here, not on its variable: a failing precondition
+  # prints nothing of a sensitive value (variables.tf).
+  lifecycle {
+    precondition {
+      condition     = var.releases_read_token != ""
+      error_message = "releases_read_token is empty: the production environment does not hold RELEASES_READ_TOKEN, or the workflow does not pass it. The Worker fails every run without it (agentshed ADR-0057), so nothing is deployed."
+    }
+
+    # Empty is the precondition above's to report. GitHub documents the
+    # prefix of each kind of token, not the characters after it, so what
+    # follows the prefix is held to the characters a bearer token may hold
+    # (RFC 6750, b64token), which leaves out every kind of whitespace. A space
+    # or tab inside the token, or a character outside ASCII anywhere in it,
+    # reaches GitHub, and a newline inside it fails the request. A trailing
+    # space, tab or line break is dropped from the request's header but not
+    # from the bound value, which the Worker removes verbatim from a failure's
+    # text.
+    precondition {
+      condition     = var.releases_read_token == "" || can(regex("^github_pat_[0-9A-Za-z._~+/-]+=*$", var.releases_read_token))
+      error_message = "releases_read_token is not a fine-grained personal access token and nothing else: the kind agentshed ADR-0057 chose starts with github_pat_, followed only by characters a bearer token may hold (RFC 6750: letters, digits and -._~+/, then any = padding), so no whitespace. Nothing is deployed."
+    }
+  }
 }
 
 # Minute 31, so that each run reaches the cursor the Download count workflow's

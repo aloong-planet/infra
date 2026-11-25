@@ -138,7 +138,7 @@ Only when the criteria above call for one.
    `main` only and "Prevent self-review" off. Give it `CLOUDFLARE_ACCOUNT_ID`
    and the `STATE_R2_*` values for the state backend, plus its own. A secret
    name not used yet goes into `on.workflow_call.secrets` and the step
-   environments of `terraform-stack.yml`, and into
+   environments of `terraform-stack.yml`, and, if the env file holds it, into
    `scripts/with-credentials.sh`.
 4. Its first run's plan should show only the new stack's resources.
 
@@ -162,6 +162,15 @@ include no Workers permission. It deploys with the account API token
 the account only and which the workers stack reads from apps' state. That
 token is not in the env file or in any environment.
 
+The environment holds one secret the env file does not: `RELEASES_READ_TOKEN`,
+the read-only GitHub token (agentshed ADR-0057) that the `workers` stack
+binds to agentshed's download count Worker. It is a fine-grained PAT on the
+owner's account, read-only on public repositories and with no permissions,
+and Terraform does not create it. agentshed's runbook
+(`docs/ops/download-count.md`, "The read-only GitHub token") stores it
+straight into the environment and renews it there; kept out of the env file,
+it is never written over by the command below.
+
 The local file is `~/.config/aloong-planet/infra.env` (mode 600, outside the
 repository). To load it into the environment:
 
@@ -169,9 +178,9 @@ repository). To load it into the environment:
 gh secret set -f ~/.config/aloong-planet/infra.env --env production -R aloong-planet/infra
 ```
 
-The PAT expires (fine-grained PATs in this organization last 366 days at
-most). To rotate it, or any other value: update the env file, then run the
-command above again.
+The PAT in the env file expires (fine-grained PATs in this organization
+last 366 days at most). To rotate it, or any other value in the env file:
+update the env file, then run the command above again.
 
 The `production` environment has the owner as its required reviewer, allows
 deployments from `main` only, and leaves "Prevent self-review" off so the
@@ -190,3 +199,7 @@ cd stacks/apps
 ```
 
 Delete `plan.tfplan` when done; it holds secrets.
+
+The env file does not hold `RELEASES_READ_TOKEN`, so a local plan of the
+`workers` stack stops with no value for `releases_read_token`. Plan that
+stack through its workflow.
