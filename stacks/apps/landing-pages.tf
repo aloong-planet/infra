@@ -7,14 +7,20 @@
 
 locals {
   landing_pages = {
-    # agentshed ADR-0031, docs/specs/landing-page.md (CON-001). The build
-    # settings are the ones agentshed's site/README.md lists.
+    # agentshed ADR-0031; aloong-planet-home's docs/specs/agentshed-site.md,
+    # agentshed-site::CON-001 (https://github.com/aloong-planet/aloong-planet-home/blob/main/docs/specs/agentshed-site.md).
+    # The site is built and deployed by aloong-planet-home's CI, which uploads
+    # it to this project (that repository's ADR-0001), so Git builds are off:
+    # a push to agentshed builds nothing. The project stays connected to
+    # agentshed, and the build settings below are the ones the site had there,
+    # for when git_builds_enabled is true again.
     agentshed = {
-      repository        = "agentshed"
-      production_branch = "main"
-      root_dir          = "site"
-      build_command     = "pnpm install --frozen-lockfile && pnpm build"
-      output_dir        = "dist"
+      repository         = "agentshed"
+      git_builds_enabled = false
+      production_branch  = "main"
+      root_dir           = "site"
+      build_command      = "pnpm install --frozen-lockfile && pnpm build"
+      output_dir         = "dist"
       build_env = {
         # Astro 7 needs 22.22.0 or later, and the corepack the build image
         # installs (0.36.0) wants 22.22.2 or later; the image's default is
@@ -35,11 +41,12 @@ locals {
     # agentshed's. Its release mirror (release-mirrors.tf) allows this
     # page's origin to read the latest pointer.
     justsnap = {
-      repository        = "justsnap"
-      production_branch = "main"
-      root_dir          = "site"
-      build_command     = "pnpm install --frozen-lockfile && pnpm build"
-      output_dir        = "dist"
+      repository         = "justsnap"
+      git_builds_enabled = true
+      production_branch  = "main"
+      root_dir           = "site"
+      build_command      = "pnpm install --frozen-lockfile && pnpm build"
+      output_dir         = "dist"
       build_env = {
         # Same reasons as agentshed's: Astro 7 and the build image's corepack
         # need a newer Node than the image's 22.16.0, and the image's default
@@ -59,11 +66,12 @@ locals {
     # (the watch path is the whole repository). Changing any of them is a
     # change to the live site.
     "transfer-org" = {
-      repository        = "transfer"
-      production_branch = "master"
-      root_dir          = "site"
-      build_command     = "pnpm install && pnpm build"
-      output_dir        = "dist"
+      repository         = "transfer"
+      git_builds_enabled = true
+      production_branch  = "master"
+      root_dir           = "site"
+      build_command      = "pnpm install && pnpm build"
+      output_dir         = "dist"
       build_env = {
         NODE_VERSION = "20"
       }
@@ -77,16 +85,17 @@ module "landing_page" {
   source   = "../../modules/landing-page"
   for_each = local.landing_pages
 
-  account_id        = var.cloudflare_account_id
-  zone_id           = data.cloudflare_zone.aloongplanet.id
-  project_name      = each.key
-  repository_owner  = local.github_owner
-  repository        = each.value.repository
-  production_branch = each.value.production_branch
-  root_dir          = each.value.root_dir
-  build_command     = each.value.build_command
-  output_dir        = each.value.output_dir
-  build_env         = each.value.build_env
-  watch_paths       = each.value.watch_paths
-  domain            = each.value.domain
+  account_id         = var.cloudflare_account_id
+  zone_id            = data.cloudflare_zone.aloongplanet.id
+  project_name       = each.key
+  repository_owner   = local.github_owner
+  repository         = each.value.repository
+  git_builds_enabled = each.value.git_builds_enabled
+  production_branch  = each.value.production_branch
+  root_dir           = each.value.root_dir
+  build_command      = each.value.build_command
+  output_dir         = each.value.output_dir
+  build_env          = each.value.build_env
+  watch_paths        = each.value.watch_paths
+  domain             = each.value.domain
 }

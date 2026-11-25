@@ -13,8 +13,11 @@ It also mints the token the `workers` stack deploys its Workers with
 (below).
 
 agentshed is the first app with both (agentshed ADR-0031,
-`docs/specs/mac-distribution.md`, `docs/specs/landing-page.md`); JustSnap has
-both too, and its landing page's build settings are in `site/README.md` of the
+`docs/specs/mac-distribution.md`, and aloong-planet-home's
+[`docs/specs/agentshed-site.md`](https://github.com/aloong-planet/aloong-planet-home/blob/main/docs/specs/agentshed-site.md),
+`agentshed-site::CON-001`); its landing page is built and deployed by
+aloong-planet-home, so its Git builds are off (below). JustSnap has both too,
+and its landing page's build settings are in `site/README.md` of the
 `justsnap` repository. Transfer has a landing page only, the entry
 `transfer-org`; its release bucket is not managed here.
 
@@ -168,14 +171,23 @@ Each entry in `landing_pages` gets, through `modules/landing-page`:
 
 | Resource | Details |
 |---|---|
-| Pages project, named after the entry's key | Builds `root_dir` of `aloong-planet/<repository>` with `build_command` into `output_dir`, on every push that changes a path in `watch_paths`. Pushes to `production_branch` deploy to the domain; other branches get preview deployments on `pages.dev`. `build_env` goes to production and preview builds alike, as plain text |
+| Pages project, named after the entry's key | Builds `root_dir` of `aloong-planet/<repository>` with `build_command` into `output_dir`, on every push that changes a path in `watch_paths`. Pushes to `production_branch` deploy to the domain; other branches get preview deployments on `pages.dev`. `build_env` goes to production and preview builds alike, as plain text. With the entry's `git_builds_enabled` false, no push builds, on any branch (below) |
 | Pages custom domain | The entry's `domain` |
 | DNS record | A proxied `CNAME` from `domain` to the project's `pages.dev` host, in the `aloongplanet.com` zone |
 
-Cloudflare runs the builds; nothing here builds or deploys the site. Pull
-requests from forks get no preview deployment. The build settings come from
-the app's own documentation (for agentshed, "Deploying" in `site/README.md`);
-when that changes, change the entry.
+Cloudflare runs the builds of the entries whose `git_builds_enabled` is true;
+nothing here builds or deploys a site. Pull requests from forks get no preview
+deployment. The build settings of those entries come from the app's own
+documentation (for justsnap, "Deploying" in `site/README.md`); when that
+changes, change the entry.
+
+An entry with `git_builds_enabled` false (agentshed's) builds nothing: its
+site is built by aloong-planet-home's CI and uploaded to the project with
+Wrangler (that repository's
+[ADR-0001](https://github.com/aloong-planet/aloong-planet-home/blob/main/docs/adr/0001-app-websites-in-this-repository.md)).
+The project stays connected to its repository, because Cloudflare does not
+switch a Git project to Direct Upload, and its build settings are kept but
+unused. See [Turning off a page's Git builds](#turning-off-a-pages-git-builds).
 
 Transfer's page, the entry `transfer-org`, was made in the dashboard before
 this stack existed. `imports.tf` brings its project, domain and DNS record
@@ -209,6 +221,19 @@ access in the organization's GitHub Apps settings.
 
 Removing an entry deletes that app's project with all its deployments, its
 domain and its DNS record.
+
+### Turning off a page's Git builds
+
+Set the entry's `git_builds_enabled` to `false`. The module then sets the
+project's `production_deployments_enabled` to `false` and its
+`preview_deployment_setting` to `"none"`, which are the two switches Cloudflare
+names for [disabling automatic deployments](https://developers.cloudflare.com/pages/configuration/git-integration/#disable-automatic-deployments).
+The plan should change that one project in place and nothing else.
+
+Turn them off before the site's new deployer starts, so two never deploy the
+same project and overwrite each other, and leave the entry in place afterwards:
+removing it would delete the project. Setting the value back to `true` starts
+Git builds again.
 
 ### Checking a project after its first apply
 
