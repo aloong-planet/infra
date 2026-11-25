@@ -213,7 +213,10 @@ access in the organization's GitHub Apps settings.
    project and its `pages.dev` host, which gets a suffix if the name is taken
    (JustSnap's is `justsnap-ceo.pages.dev`). By convention the domain is
    `<app>.aloongplanet.com`. If the app has a release mirror, its
-   `allowed_origins` should list `https://<domain>`.
+   `allowed_origins` should list `https://<domain>`. The entry's
+   `git_builds_enabled` is required: `true` if Cloudflare builds the site on pushes, as JustSnap's
+   and Transfer's do, or `false` if the site is built and uploaded elsewhere,
+   as agentshed's is (see below).
 3. Open a pull request, merge it, and approve Plan and then Apply in the
    `Terraform apps` run. The plan should add the new entry's 3 resources and
    change nothing else.
