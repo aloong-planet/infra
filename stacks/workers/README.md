@@ -51,9 +51,10 @@ character a bearer token cannot hold (RFC 6750's b64token: letters, digits
 and `-._~+/`, then any `=` padding), which includes every kind of
 whitespace. A space or tab inside the token, or a character outside ASCII
 anywhere in it, reaches GitHub as part of it, and a newline inside it fails
-the request. ASCII whitespace after it is dropped from the request's header,
-but not from the bound value, which the Worker removes verbatim from a
-failure's text (agentshed's `scripts/download-count-worker.mjs`).
+the request. A space, tab or line break after it is dropped from the
+request's header (a form feed or vertical tab is not), but not from the bound
+value, which the Worker removes verbatim from a failure's text (agentshed's
+`scripts/download-count-worker.mjs`).
 
 Both checks are preconditions on the Worker, not a validation on the
 variable, because whether a failing validation prints a sensitive value

@@ -138,7 +138,7 @@ Only when the criteria above call for one.
    `main` only and "Prevent self-review" off. Give it `CLOUDFLARE_ACCOUNT_ID`
    and the `STATE_R2_*` values for the state backend, plus its own. A secret
    name not used yet goes into `on.workflow_call.secrets` and the step
-   environments of `terraform-stack.yml`, and into
+   environments of `terraform-stack.yml`, and, if the env file holds it, into
    `scripts/with-credentials.sh`.
 4. Its first run's plan should show only the new stack's resources.
 
@@ -178,9 +178,9 @@ repository). To load it into the environment:
 gh secret set -f ~/.config/aloong-planet/infra.env --env production -R aloong-planet/infra
 ```
 
-The PAT expires (fine-grained PATs in this organization last 366 days at
-most). To rotate it, or any other value in the env file: update the env
-file, then run the command above again.
+The PAT in the env file expires (fine-grained PATs in this organization
+last 366 days at most). To rotate it, or any other value in the env file:
+update the env file, then run the command above again.
 
 The `production` environment has the owner as its required reviewer, allows
 deployments from `main` only, and leaves "Prevent self-review" off so the
