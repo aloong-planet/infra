@@ -1,8 +1,8 @@
-# agentshed's download count Worker in the shadow period (agentshed ADR-0056,
+# agentshed's download count Worker (agentshed ADR-0056,
 # docs/specs/download-count.md, download-count::REQ-011): every hour it runs the
-# download count's core over its binding to agentshed's release bucket. What
-# it writes, and how to read its runs, is in agentshed's
-# docs/ops/download-count.md, "The Worker in the shadow period".
+# download count's core over its binding to agentshed's release bucket and
+# writes the statistics file. What it writes, and how to read its runs, is in
+# agentshed's docs/ops/download-count.md, "What a Worker run does".
 #
 # The modules are agentshed's, deployed from the commit pinned below and
 # checked against their pinned SHA-256 before anything is planned. To change
@@ -87,7 +87,7 @@ resource "cloudflare_workers_script" "download_count" {
       text = local.download_count_settings.zone_id
     },
     {
-      # Recorded in every run, and compared with the workflow's core.
+      # Recorded in every run.
       name = "CORE_SHA256"
       type = "plain_text"
       text = local.download_count_modules["download-count-core.mjs"].sha256
@@ -133,8 +133,9 @@ resource "cloudflare_workers_script" "download_count" {
   }
 }
 
-# Minute 31, so that each run reaches the cursor the Download count workflow's
-# run at minute 47 reaches (agentshed's runbook).
+# Minute 31, so that each run counts to the last full hour (agentshed's
+# runbook, "What a Worker run does"); the Download count workflow, its
+# watchdog, reads the file at minute 47.
 resource "cloudflare_workers_cron_trigger" "download_count" {
   account_id  = var.cloudflare_account_id
   script_name = cloudflare_workers_script.download_count.script_name

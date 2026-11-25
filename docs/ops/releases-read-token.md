@@ -37,7 +37,7 @@ Worker's run at 09:31Z too, whose entry has `github` `ok`.
 
 | Worker | Binding | Its run record |
 |---|---|---|
-| agentshed's download count Worker (`stacks/workers/download-count.tf`) | The secret binding `RELEASES_READ_TOKEN` | <https://dl.agentshed.aloongplanet.com/stats/worker-runs.json>, read as agentshed's runbook says ("The Worker in the shadow period", <https://github.com/aloong-planet/agentshed/blob/main/docs/ops/download-count.md#the-worker-in-the-shadow-period>) |
+| agentshed's download count Worker (`stacks/workers/download-count.tf`) | The secret binding `RELEASES_READ_TOKEN` | <https://dl.agentshed.aloongplanet.com/stats/worker-runs.json>, read as agentshed's runbook says ("What a Worker run does", <https://github.com/aloong-planet/agentshed/blob/main/docs/ops/download-count.md#what-a-worker-run-does>) |
 
 A new Worker that reads GitHub binds the same secret, and is added here.
 

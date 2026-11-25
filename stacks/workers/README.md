@@ -1,8 +1,8 @@
 # workers stack
 
 Cloudflare Workers that run on a schedule and answer no request. Today there
-is one: agentshed's download count Worker, in its shadow period (agentshed
-ADR-0056, `docs/specs/download-count.md`).
+is one: agentshed's download count Worker, which writes agentshed's
+statistics file (agentshed ADR-0056, `docs/specs/download-count.md`).
 
 The stack runs through the `Terraform workers` workflow in the `production`
 environment, and its state key is `workers/terraform.tfstate`. It deploys
@@ -28,7 +28,7 @@ removes the Worker from this stack checks in Cloudflare that its schedule is
 gone too.
 
 Its bindings are the ones agentshed's `docs/ops/download-count.md` lists
-("The Worker in the shadow period"), with these values:
+("The Worker"), with these values:
 
 | Binding | Value |
 |---|---|
@@ -103,8 +103,8 @@ binding again, from both.
 
 The first apply needs apps' outputs, so apps is applied first (repository
 README, "How a change ships"). After each apply, check the run record's
-newest entries, one an hour with `written` true, with the command in
-agentshed's runbook.
+newest entries, one an hour with `key` `stats/downloads.json` and `written`
+true, with the command in agentshed's runbook ("What a Worker run does").
 
 ### Tests
 

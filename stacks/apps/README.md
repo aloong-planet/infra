@@ -108,41 +108,28 @@ Each entry in `download_counts` gets, in `download-counts.tf`:
 | Resource | Details |
 |---|---|
 | Account API token `<app>-download-count` | Analytics Read on the `aloongplanet.com` zone, nothing else |
-| Two Actions secrets in the entry's `repository` | See below |
 
-| Secret | Value |
-|---|---|
-| `CF_ANALYTICS_API_TOKEN` | The app's `<app>-download-count` token |
-| `CF_ZONE_ID` | The `aloongplanet.com` zone's ID |
-
-The app's download count workflow reads its download host's traffic from
-Cloudflare's GraphQL Analytics API with these two, and reads and writes its
-release bucket with the release mirror's four `R2_*` secrets, so an entry
-here needs one in `release_mirrors` too. The zone ID is a secret rather than
-a variable because the PAT holds secrets permission only. Terraform owns
-both secrets, as it does the `R2_*` ones.
-
-The stack also outputs each entry's zone ID and release bucket
+The stack outputs each entry's zone ID and release bucket
 (`download_counts`) and its token (`download_count_tokens`, sensitive). The
-`workers` stack binds them to the app's download count Worker, if it has one.
+`workers` stack binds them to the app's download count Worker, which reads
+its download host's traffic from Cloudflare's GraphQL Analytics API with the
+token and the zone ID. The bucket is the release mirror's, so an entry here
+needs one in `release_mirrors` too. Nothing is written to the app's
+repository.
 
 agentshed is the first entry (agentshed ADR-0055, `docs/specs/download-count.md`,
 `download-count::REQ-011`).
 
 ### Adding a download count
 
-1. Check that the app's repository is in the PAT's repository access; it is
-   when the app has a release mirror.
-2. Add an entry to `download_counts` in `download-counts.tf`.
-3. Open a pull request, merge it, and approve Plan and then Apply in the
-   `Terraform apps` run. The plan should add the new entry's 3 resources and
-   its values in the two outputs, and change nothing else.
-4. Check that `gh secret list -R aloong-planet/<repository>` lists
-   `CF_ANALYTICS_API_TOKEN` and `CF_ZONE_ID`.
+1. Add an entry to `download_counts` in `download-counts.tf`.
+2. Open a pull request, merge it, and approve Plan and then Apply in the
+   `Terraform apps` run. The plan should add the new entry's token and its
+   values in the two outputs, and change nothing else.
 
-Removing an entry destroys that app's token and its two secrets. If the app
-has a Worker in the `workers` stack, remove that first: its plan fails once
-the entry is gone from the outputs.
+Removing an entry destroys that app's token. If the app has a Worker in the
+`workers` stack, remove that first: its plan fails once the entry is gone
+from the outputs.
 
 ## The Workers deploy token
 
