@@ -2,7 +2,7 @@
 
 Cloudflare Workers that run on a schedule and answer no request. Today there
 is one: agentshed's download count Worker, in its shadow period (agentshed
-ADR-0056, `docs/specs/landing-page.md`).
+ADR-0056, `docs/specs/download-count.md`).
 
 The stack runs through the `Terraform workers` workflow in the `production`
 environment, and its state key is `workers/terraform.tfstate`. It deploys

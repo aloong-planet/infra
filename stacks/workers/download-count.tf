@@ -1,5 +1,5 @@
 # agentshed's download count Worker in the shadow period (agentshed ADR-0056,
-# docs/specs/landing-page.md, landing-page::REQ-011): every hour it runs the
+# docs/specs/download-count.md, download-count::REQ-011): every hour it runs the
 # download count's core over its binding to agentshed's release bucket. What
 # it writes, and how to read its runs, is in agentshed's
 # docs/ops/download-count.md, "The Worker in the shadow period".
