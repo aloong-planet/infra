@@ -229,3 +229,17 @@ run "a_releases_read_token_with_a_space_inside_deploys_nothing" {
     cloudflare_workers_script.download_count,
   ]
 }
+
+# A no-break space copied with the token stays in the request's header, as
+# any character outside ASCII does, and a bearer token holds none.
+run "a_releases_read_token_with_a_no_break_space_after_it_deploys_nothing" {
+  command = plan
+
+  variables {
+    releases_read_token = "github_pat_stand_in_releases_token\u00a0"
+  }
+
+  expect_failures = [
+    cloudflare_workers_script.download_count,
+  ]
+}

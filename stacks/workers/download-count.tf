@@ -118,14 +118,16 @@ resource "cloudflare_workers_script" "download_count" {
     }
 
     # Empty is the precondition above's to report. GitHub documents the
-    # prefix of each kind of token, not the characters after it, so only the
-    # prefix and the absence of whitespace are checked. Whitespace inside the
-    # token reaches GitHub (a space or tab) or fails the request (a newline).
-    # Trailing whitespace is dropped from the request's header but not from
-    # the bound value, which the Worker removes verbatim from a failure's text.
+    # prefix of each kind of token, not the characters after it, so what
+    # follows the prefix is held to the characters a bearer token may hold
+    # (RFC 6750, b64token), which leaves out every kind of whitespace. A space
+    # or tab inside the token, or a character outside ASCII anywhere in it,
+    # reaches GitHub, and a newline inside it fails the request. Trailing
+    # ASCII whitespace is dropped from the request's header but not from the
+    # bound value, which the Worker removes verbatim from a failure's text.
     precondition {
-      condition     = var.releases_read_token == "" || can(regex("^github_pat_\\S+$", var.releases_read_token))
-      error_message = "releases_read_token is not a fine-grained personal access token with nothing around it: the kind agentshed ADR-0057 chose starts with github_pat_ and has no whitespace. Nothing is deployed."
+      condition     = var.releases_read_token == "" || can(regex("^github_pat_[0-9A-Za-z._~+/-]+=*$", var.releases_read_token))
+      error_message = "releases_read_token is not a fine-grained personal access token and nothing else: the kind agentshed ADR-0057 chose starts with github_pat_, followed only by characters a bearer token may hold (RFC 6750: letters, digits and -._~+/, then any = padding), so no whitespace. Nothing is deployed."
     }
   }
 }

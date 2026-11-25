@@ -46,9 +46,12 @@ The Worker fails every run without it, so the plan fails, and nothing is
 deployed, when `releases_read_token` is empty, as it is when the environment
 does not hold the secret or the workflow does not pass it. It fails too when
 the value does not start with `github_pat_`, the prefix of a fine-grained
-personal access token, the kind ADR-0057 chose, or holds whitespace. A space
-or tab inside the token reaches GitHub as part of it, and a newline inside it
-fails the request. Whitespace after it is dropped from the request's header,
+personal access token, the kind ADR-0057 chose, or holds after the prefix a
+character a bearer token cannot hold (RFC 6750's b64token: letters, digits
+and `-._~+/`, then any `=` padding), which includes every kind of
+whitespace. A space or tab inside the token, or a character outside ASCII
+anywhere in it, reaches GitHub as part of it, and a newline inside it fails
+the request. ASCII whitespace after it is dropped from the request's header,
 but not from the bound value, which the Worker removes verbatim from a
 failure's text (agentshed's `scripts/download-count-worker.mjs`).
 
@@ -111,8 +114,8 @@ with other content is refused, and the bindings, schedule and workers.dev
 setting. It also checks that both tokens read from apps' state are
 sensitive: the state does not keep apps' sensitive mark, so this stack marks
 them again (`apps.tf`). The read-only GitHub token is sensitive too, and the
-plan refuses it empty, of another kind, with a trailing newline or with a
-space inside it. It does
+plan refuses it empty, of another kind, with a trailing newline, with a
+space inside it or with a no-break space after it. It does
 not show which token the provider uses, or whether Cloudflare accepts the
 upload. A Plan does not show them either: the provider does not check its
 token, and planning new resources calls no API. The first Apply shows both.
