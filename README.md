@@ -153,7 +153,7 @@ the same names in the local env file and as its secrets:
 |---|---|---|
 | `CLOUDFLARE_API_TOKEN` | Account API token `terraform-aloong-planet-infra` | Account: Workers R2 Storage Write, Account API Tokens Write, Pages Write. Zone `aloongplanet.com` only: DNS Write, Zone Read, and Zone Settings Read and Edit, which only the `zone` stack uses |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID | |
-| `REPO_SECRETS_TOKEN` | Fine-grained PAT `aloong-planet-infra-secrets`, resource owner `aloong-planet` | Secrets read and write on every repository in `release_mirrors` and `download_counts` (`stacks/apps`, today `agentshed` and `justsnap`). Only the `apps` stack uses it |
+| `REPO_SECRETS_TOKEN` | Fine-grained PAT `aloong-planet-infra-secrets`, resource owner `aloong-planet` | Secrets read and write on every repository in `release_mirrors` (`stacks/apps`, today `agentshed` and `justsnap`). Only the `apps` stack uses it |
 | `STATE_R2_ACCESS_KEY_ID`, `STATE_R2_SECRET_ACCESS_KEY` | S3 credentials derived from the account API token `aloong-planet-tfstate` | Workers R2 Storage Bucket Item Write on `aloong-planet-tfstate` only |
 
 The `workers` stack uses none of the Cloudflare token's permissions, which

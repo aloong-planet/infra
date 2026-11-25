@@ -1,19 +1,16 @@
 # Read access to the zone's analytics for apps whose landing page shows a
 # download count, one entry per app. Each gets an account API token that can
-# read the aloongplanet.com zone's analytics and nothing else, written with
-# the zone ID to the app's repository as Actions secrets. The app's workflow
-# reads its download host's traffic from Cloudflare's GraphQL Analytics API
-# with them; it reaches the release bucket with the release mirror's R2_*
-# secrets. This stack's README lists the steps around adding an app.
+# read the aloongplanet.com zone's analytics and nothing else. The stack
+# outputs it, with the zone ID and the app's release bucket, to the workers
+# stack, which binds them to the app's download count Worker (outputs.tf).
+# This stack's README lists the steps around adding an app.
 
 locals {
   download_counts = {
     # agentshed ADR-0055, docs/specs/download-count.md (download-count::REQ-011).
     # Its download host, dl.agentshed.aloongplanet.com, is in this zone
     # (release-mirrors.tf).
-    agentshed = {
-      repository = "agentshed"
-    }
+    agentshed = {}
   }
 }
 
@@ -41,22 +38,4 @@ resource "cloudflare_account_token" "download_count" {
       "com.cloudflare.api.account.zone.${data.cloudflare_zone.aloongplanet.id}" = "*"
     })
   }]
-}
-
-resource "github_actions_secret" "download_count_token" {
-  for_each = local.download_counts
-
-  repository  = each.value.repository
-  secret_name = "CF_ANALYTICS_API_TOKEN"
-  value       = cloudflare_account_token.download_count[each.key].value
-}
-
-# A secret rather than a variable: the token that writes to the app's
-# repository holds secrets permission only (README, Credentials).
-resource "github_actions_secret" "download_count_zone" {
-  for_each = local.download_counts
-
-  repository  = each.value.repository
-  secret_name = "CF_ZONE_ID"
-  value       = data.cloudflare_zone.aloongplanet.id
 }
