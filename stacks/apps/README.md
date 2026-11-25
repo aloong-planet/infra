@@ -241,12 +241,16 @@ of how Cloudflare built the site, and setting the value back to `true` starts
 builds from them, on the pushes `watch_paths` select, so it works only while
 the app's repository still holds the directory `root_dir` names, with what the
 build needs. agentshed's and justsnap's repositories have dropped `site/`, and
-their watch path is `site/*`, so for those two `true` would start no build
-until a push changes `site/` again. Transfer's watch path is the whole
-repository, so once it drops `site/`, `true` would start a build of a
-directory that is not there on every push. Either way the site does not come
-back. Before setting such an entry back to `true`, restore the directory in the
-repository and check the entry's build settings against it.
+their watch path is `site/*`, so for those two `true` would start no build on
+an ordinary push, only on one that changes `site/` again. Transfer's watch path
+is the whole repository, so once it drops `site/`, `true` would start a build
+of a directory that is not there on every push. Either way the site does not
+come back. (Cloudflare's [build watch
+paths](https://developers.cloudflare.com/pages/configuration/build-watch-paths/)
+skip the build of a push that changes none of the included paths, except an
+empty push and one of 3000 or more changed files or 20 or more commits, which
+always build.) Before setting such an entry back to `true`, restore the
+directory in the repository and check the entry's build settings against it.
 
 The module sets both settings for every entry, the ones whose value is `true`
 included (production builds, and previews of the other branches), so a change

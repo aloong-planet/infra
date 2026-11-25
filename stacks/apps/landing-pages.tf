@@ -15,7 +15,8 @@ locals {
     # agentshed, and the build settings below are the ones the site had there,
     # a record only: agentshed no longer has site/, so setting
     # git_builds_enabled to true would not bring the site back: the watch path
-    # is site/*, so no push starts a build until one changes site/ again.
+    # is site/*, so an ordinary push starts no build until one changes
+    # site/ again.
     agentshed = {
       repository         = "agentshed"
       git_builds_enabled = false

@@ -10,9 +10,11 @@
 # that as an update), and the DNS record gets the comment the module gives
 # every landing page's record, which the dashboard left empty.
 #
-# Once the resources are in the state, Terraform skips the blocks. Delete this
-# file together with the transfer-org entry if Transfer's page is ever removed:
-# an import block whose target is gone fails the plan.
+# Once the resources are in the state, Terraform skips the blocks, as it has
+# since the apply of 2026-11-24 that imported them: a plan no longer shows the
+# three updates above. Delete this file together with the transfer-org entry if
+# Transfer's page is ever removed: an import block whose target is gone fails
+# the plan.
 #
 # The DNS record is looked up by its name instead of its ID, so no ID is
 # written here. Its block runs once per record found, so a record deleted in
