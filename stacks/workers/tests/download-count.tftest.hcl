@@ -69,7 +69,7 @@ run "the_pinned_modules_are_deployed" {
   }
 
   assert {
-    condition     = sha256(base64decode(cloudflare_workers_script.download_count.files["download-count-core.mjs"].content_base64)) == "e8af321bd2ce9d65380c063f8f74f90251b5db02b0c531c7ff5263b9108d496b"
+    condition     = sha256(base64decode(cloudflare_workers_script.download_count.files["download-count-core.mjs"].content_base64)) == "3a2566b617d1f1a8424f9bd65dd0b62029345953257e37594ebe6785d4860e56"
     error_message = "download-count-core.mjs is not scripts/download-count-core.mjs at the pinned commit."
   }
 }
@@ -121,7 +121,7 @@ run "the_worker_is_bound_scheduled_and_kept_off_workers_dev" {
       BUCKET                 = { type = "r2_bucket", value = "stand-in-bucket" }
       CF_ANALYTICS_API_TOKEN = { type = "secret_text", value = "stand-in-analytics-token" }
       CF_ZONE_ID             = { type = "plain_text", value = "00000000000000000000000000000002" }
-      CORE_SHA256            = { type = "plain_text", value = "e8af321bd2ce9d65380c063f8f74f90251b5db02b0c531c7ff5263b9108d496b" }
+      CORE_SHA256            = { type = "plain_text", value = "3a2566b617d1f1a8424f9bd65dd0b62029345953257e37594ebe6785d4860e56" }
       DOWNLOAD_HOST          = { type = "plain_text", value = "https://dl.agentshed.aloongplanet.com" }
       GITHUB_REPOSITORY      = { type = "plain_text", value = "aloong-planet/agentshed" }
       RELEASES_READ_TOKEN    = { type = "secret_text", value = "github_pat_stand_in_releases_token" }
