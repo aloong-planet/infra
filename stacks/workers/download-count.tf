@@ -10,18 +10,18 @@
 # both hashes here in one pull request (this stack's README).
 
 locals {
-  agentshed_commit = "627c8cc9eb5fd29c4f689899d480238069ef9da8"
+  agentshed_commit = "60f4d648a2a95dc2ff56914ece790e238beafe14"
 
   # Keyed by the name each module is uploaded under, which is the name the
   # main module imports the core by.
   download_count_modules = {
     "download-count-worker.mjs" = {
       path   = "scripts/download-count-worker.mjs"
-      sha256 = "5dc30a3252d6cdc88a1821df4991aacd6f88c9b1d2519a7fd7eedff898530ff3"
+      sha256 = "457b396e22b16646fd045f7af211927403d6fe2adca3e652cc58302dfb01e1a7"
     }
     "download-count-core.mjs" = {
       path   = "scripts/download-count-core.mjs"
-      sha256 = "3a2566b617d1f1a8424f9bd65dd0b62029345953257e37594ebe6785d4860e56"
+      sha256 = "d868ac2cad6e9612fee5e91c09227439adc410c4c82fc5ce3c44dc832613eeeb"
     }
   }
 
