@@ -31,6 +31,8 @@ on:
         required: false
       REPO_SECRETS_TOKEN:
         required: false
+      RELEASES_READ_TOKEN:
+        required: false
 
 permissions:
   contents: read
@@ -74,6 +76,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           TF_VAR_github_token: ${{ secrets.REPO_SECRETS_TOKEN }}
+          TF_VAR_releases_read_token: ${{ secrets.RELEASES_READ_TOKEN }}
           AWS_ACCESS_KEY_ID: ${{ secrets.STATE_R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.STATE_R2_SECRET_ACCESS_KEY }}
           AWS_ENDPOINT_URL_S3: https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com
@@ -121,6 +124,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           TF_VAR_github_token: ${{ secrets.REPO_SECRETS_TOKEN }}
+          TF_VAR_releases_read_token: ${{ secrets.RELEASES_READ_TOKEN }}
           AWS_ACCESS_KEY_ID: ${{ secrets.STATE_R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.STATE_R2_SECRET_ACCESS_KEY }}
           AWS_ENDPOINT_URL_S3: https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com

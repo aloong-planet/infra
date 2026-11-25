@@ -12,6 +12,13 @@
 #   API. A wrong wiring shows at the first Apply.
 # - Whether Cloudflare accepts the upload, the Cron Trigger and the workers.dev
 #   setting: only the Apply shows it.
+# - Whether the workflows pass the production environment's
+#   RELEASES_READ_TOKEN to releases_read_token: a secret they do not pass
+#   arrives empty, which the empty-token run below shows the Plan refuses.
+# - Whether GitHub accepts the token: only the Worker's first run after the
+#   Apply shows it, in its run record (agentshed's runbook).
+# - That a failed precondition prints nothing of the token: Terraform's
+#   behaviour, seen by hand, not something a run can assert.
 
 mock_provider "cloudflare" {}
 
@@ -35,13 +42,14 @@ override_data {
 
 variables {
   cloudflare_account_id = "00000000000000000000000000000001"
+  releases_read_token   = "github_pat_stand_in_releases_token"
 }
 
 run "the_pinned_modules_are_deployed" {
   command = plan
 
   assert {
-    condition     = sha256(cloudflare_workers_script.download_count.content) == "5ffbd0e003145ba42b08aa5be22af6eddf295dcb913d5a75e12c2cbcd96aa5ef"
+    condition     = sha256(cloudflare_workers_script.download_count.content) == "dd7b3a6732785548c3296f04a469b560e7558f9de07337e9f5eb97255ea70d89"
     error_message = "The script's content is not scripts/download-count-worker.mjs at the pinned commit."
   }
 
@@ -61,7 +69,7 @@ run "the_pinned_modules_are_deployed" {
   }
 
   assert {
-    condition     = sha256(base64decode(cloudflare_workers_script.download_count.files["download-count-core.mjs"].content_base64)) == "730b4b71fa4b591483060c5ece324f8c431f2ccfa4eb817f6f8fee97462465b5"
+    condition     = sha256(base64decode(cloudflare_workers_script.download_count.files["download-count-core.mjs"].content_base64)) == "e8af321bd2ce9d65380c063f8f74f90251b5db02b0c531c7ff5263b9108d496b"
     error_message = "download-count-core.mjs is not scripts/download-count-core.mjs at the pinned commit."
   }
 }
@@ -104,7 +112,7 @@ run "the_worker_is_bound_scheduled_and_kept_off_workers_dev" {
   command = plan
 
   # Every binding by name, with its type and its bucket or text. Exactly these
-  # six: ACCEPT_GAP_FROM is bound only while a gap is to be accepted.
+  # seven: ACCEPT_GAP_FROM is bound only while a gap is to be accepted.
   assert {
     condition = jsonencode({
       for b in cloudflare_workers_script.download_count.bindings :
@@ -113,11 +121,12 @@ run "the_worker_is_bound_scheduled_and_kept_off_workers_dev" {
       BUCKET                 = { type = "r2_bucket", value = "stand-in-bucket" }
       CF_ANALYTICS_API_TOKEN = { type = "secret_text", value = "stand-in-analytics-token" }
       CF_ZONE_ID             = { type = "plain_text", value = "00000000000000000000000000000002" }
-      CORE_SHA256            = { type = "plain_text", value = "730b4b71fa4b591483060c5ece324f8c431f2ccfa4eb817f6f8fee97462465b5" }
+      CORE_SHA256            = { type = "plain_text", value = "e8af321bd2ce9d65380c063f8f74f90251b5db02b0c531c7ff5263b9108d496b" }
       DOWNLOAD_HOST          = { type = "plain_text", value = "https://dl.agentshed.aloongplanet.com" }
       GITHUB_REPOSITORY      = { type = "plain_text", value = "aloong-planet/agentshed" }
+      RELEASES_READ_TOKEN    = { type = "secret_text", value = "github_pat_stand_in_releases_token" }
     })
-    error_message = "The Worker's bindings are not exactly the six of agentshed's runbook, with the apps stack's bucket, analytics token and zone."
+    error_message = "The Worker's bindings are not exactly the seven of agentshed's runbook, with the apps stack's bucket, analytics token and zone, and the read-only GitHub token from releases_read_token."
   }
 
   assert {
@@ -143,8 +152,8 @@ run "the_worker_is_bound_scheduled_and_kept_off_workers_dev" {
 
 # The stand-ins above are plain values, as apps' sensitive outputs are when
 # read through terraform_remote_state, so the mark has to come from this
-# stack.
-run "the_tokens_read_from_apps_state_stay_sensitive" {
+# stack. The read-only GitHub token's comes from its variable's declaration.
+run "the_tokens_stay_sensitive" {
   command = plan
 
   assert {
@@ -156,4 +165,52 @@ run "the_tokens_read_from_apps_state_stay_sensitive" {
     condition     = issensitive(local.workers_deploy_token)
     error_message = "The Workers deploy token, read from apps' state, is not sensitive: a plan would print it."
   }
+
+  assert {
+    condition     = issensitive(var.releases_read_token)
+    error_message = "The read-only GitHub token is not sensitive: a plan would print it."
+  }
+}
+
+# A secret the workflow does not pass, or the environment does not hold,
+# reaches the stack as an empty string. The Worker fails every run without
+# the token (agentshed ADR-0057), so the plan stops instead.
+run "an_empty_releases_read_token_deploys_nothing" {
+  command = plan
+
+  variables {
+    releases_read_token = ""
+  }
+
+  expect_failures = [
+    cloudflare_workers_script.download_count,
+  ]
+}
+
+# agentshed ADR-0057 chose a fine-grained personal access token, whose prefix
+# is github_pat_ in GitHub's table of token formats; a classic token's is ghp_.
+run "a_releases_read_token_of_another_kind_deploys_nothing" {
+  command = plan
+
+  variables {
+    releases_read_token = "ghp_stand_in_classic_token"
+  }
+
+  expect_failures = [
+    cloudflare_workers_script.download_count,
+  ]
+}
+
+# The Worker sends the token as it is bound, so a newline pasted with it
+# would reach GitHub as part of the token.
+run "a_releases_read_token_with_a_trailing_newline_deploys_nothing" {
+  command = plan
+
+  variables {
+    releases_read_token = "github_pat_stand_in_releases_token\n"
+  }
+
+  expect_failures = [
+    cloudflare_workers_script.download_count,
+  ]
 }

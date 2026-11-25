@@ -2,14 +2,15 @@
 
 Cloudflare Workers that run on a schedule and answer no request. Today there
 is one: agentshed's download count Worker, in its shadow period (agentshed
-ADR-0056, `docs/specs/landing-page.md`).
+ADR-0056, `docs/specs/download-count.md`).
 
 The stack runs through the `Terraform workers` workflow in the `production`
 environment, and its state key is `workers/terraform.tfstate`. It deploys
 with the `workers-deploy` token that the `apps` stack mints, read from apps'
 state, never with the environment's Cloudflare token (`stacks/apps/README.md`,
-"The Workers deploy token"). The repository README covers how a change
-ships, credentials and running locally.
+"The Workers deploy token"). The one secret of the environment it binds to
+a Worker is `RELEASES_READ_TOKEN` (below). The repository README covers how a
+change ships, credentials and running locally.
 
 ## agentshed's download count Worker
 
@@ -37,6 +38,23 @@ Its bindings are the ones agentshed's `docs/ops/download-count.md` lists
 | `CORE_SHA256` | The core module's pinned SHA-256 |
 | `DOWNLOAD_HOST` | `https://dl.agentshed.aloongplanet.com` |
 | `GITHUB_REPOSITORY` | `aloong-planet/agentshed` |
+| `RELEASES_READ_TOKEN` | Secret: the read-only GitHub token (agentshed ADR-0057), the `production` environment's `RELEASES_READ_TOKEN`, which the workflow passes as `releases_read_token` |
+
+### The read-only GitHub token
+
+The Worker fails every run without it, so the plan fails, and nothing is
+deployed, when `releases_read_token` is empty, as it is when the environment
+does not hold the secret or the workflow does not pass it. It fails too when
+the value does not start with `github_pat_`, the prefix of a fine-grained
+personal access token, the kind ADR-0057 chose, or holds whitespace, such as
+a newline pasted with it. Both checks are preconditions on the Worker, not a
+validation on the variable: Terraform 1.16.6 prints a variable's value, even
+a sensitive one, when its validation fails, and the logs are public. A
+failing precondition prints nothing of it.
+
+Terraform does not create the token. agentshed's runbook
+(`docs/ops/download-count.md`, "The read-only GitHub token") makes it,
+stores it in the environment and renews it.
 
 ### The pinned modules
 
@@ -85,7 +103,10 @@ It checks that the pinned modules are what is uploaded, that either module
 with other content is refused, and the bindings, schedule and workers.dev
 setting. It also checks that both tokens read from apps' state are
 sensitive: the state does not keep apps' sensitive mark, so this stack marks
-them again (`apps.tf`). It does not show which token the provider uses, or
-whether Cloudflare accepts the upload. A Plan does not show them either: the
-provider does not check its token, and planning new resources calls no API.
-The first Apply shows both.
+them again (`apps.tf`). The read-only GitHub token is sensitive too, and the
+plan refuses it empty, of another kind or with a trailing newline. It does
+not show which token the provider uses, or whether Cloudflare accepts the
+upload. A Plan does not show them either: the provider does not check its
+token, and planning new resources calls no API. The first Apply shows both.
+Whether GitHub accepts the read-only token shows only in the Worker's run
+record after it.

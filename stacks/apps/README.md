@@ -123,8 +123,8 @@ The stack also outputs each entry's zone ID and release bucket
 (`download_counts`) and its token (`download_count_tokens`, sensitive). The
 `workers` stack binds them to the app's download count Worker, if it has one.
 
-agentshed is the first entry (agentshed ADR-0055, `docs/specs/landing-page.md`,
-REQ-011).
+agentshed is the first entry (agentshed ADR-0055,
+`docs/specs/download-count.md`, download-count::REQ-011).
 
 ### Adding a download count
 

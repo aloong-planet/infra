@@ -36,9 +36,13 @@ jobs:
       environment: production
     # Passed by name, so the stack gets these and nothing else. They exist only
     # in the production environment, which the called jobs run in. Neither the
-    # Cloudflare token nor the GitHub token is passed: the stack deploys with
-    # the Workers token it reads from apps' state.
+    # Cloudflare token nor REPO_SECRETS_TOKEN is passed: the stack deploys with
+    # the Workers token it reads from apps' state. RELEASES_READ_TOKEN is the
+    # read-only GitHub token the stack binds to agentshed's download count
+    # Worker (agentshed ADR-0057); unpassed, it would be empty, and the Plan
+    # fails on it.
     secrets:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       STATE_R2_ACCESS_KEY_ID: ${{ secrets.STATE_R2_ACCESS_KEY_ID }}
       STATE_R2_SECRET_ACCESS_KEY: ${{ secrets.STATE_R2_SECRET_ACCESS_KEY }}
+      RELEASES_READ_TOKEN: ${{ secrets.RELEASES_READ_TOKEN }}
