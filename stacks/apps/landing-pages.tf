@@ -13,7 +13,9 @@ locals {
     # it to this project (that repository's ADR-0001), so Git builds are off:
     # a push to agentshed builds nothing. The project stays connected to
     # agentshed, and the build settings below are the ones the site had there,
-    # for when git_builds_enabled is true again.
+    # a record only: agentshed no longer has site/, so setting
+    # git_builds_enabled to true would start builds of a directory that is not
+    # there.
     agentshed = {
       repository         = "agentshed"
       git_builds_enabled = false
@@ -42,7 +44,8 @@ locals {
     # a push to justsnap builds nothing. The project stays connected to
     # justsnap, and the build settings below are the ones the site had there
     # while it was built from that repository's site/ directory, the same as
-    # agentshed's. Its release mirror (release-mirrors.tf) allows this
+    # agentshed's and a record only for the same reason: justsnap no longer
+    # has site/. Its release mirror (release-mirrors.tf) allows this
     # page's origin to read the latest pointer.
     justsnap = {
       repository         = "justsnap"
@@ -66,12 +69,20 @@ locals {
     # Transfer's page. The values are what the project had in the dashboard
     # when it was imported (infra #16), not new choices, so they differ from
     # the other entries: the default branch is master, the build is
-    # pnpm install without a frozen lockfile on Node 20, and every push builds
-    # (the watch path is the whole repository). Changing any of them is a
-    # change to the live site.
+    # pnpm install without a frozen lockfile on Node 20, and the watch path is
+    # the whole repository, so that every push built.
+    #
+    # Git builds are off so that aloong-planet-home's CI can build and deploy
+    # the site to this project instead (that repository's ADR-0001;
+    # https://github.com/aloong-planet/aloong-planet-home/issues/27): a push
+    # to transfer builds nothing. The project stays connected to transfer,
+    # and the build settings are a record of how Cloudflare built it from that
+    # repository's site/ directory. Once transfer drops site/, setting
+    # git_builds_enabled to true would start builds of a directory that is
+    # not there.
     "transfer-org" = {
       repository         = "transfer"
-      git_builds_enabled = true
+      git_builds_enabled = false
       production_branch  = "master"
       root_dir           = "site"
       build_command      = "pnpm install && pnpm build"

@@ -2,8 +2,9 @@
 # landing-page module existed. These blocks bring its three resources (the
 # Pages project, its custom domain and the CNAME that points the domain at it)
 # into the state at the next apply. The transfer-org entry in landing-pages.tf
-# holds the values the live project had, so nothing the site serves with
-# changes. The plan still shows three updates next to the imports: the project
+# held the values the live project had, so the import changes nothing the site
+# serves with (the entry's Git builds were turned off afterwards; see its
+# comment). The plan still shows three updates next to the imports: the project
 # and the domain change no value (the account ID comes from a sensitive
 # variable, an imported resource has no sensitivity marks, and Terraform plans
 # that as an update), and the DNS record gets the comment the module gives
