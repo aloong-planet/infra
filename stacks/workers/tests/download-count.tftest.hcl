@@ -50,7 +50,7 @@ run "the_pinned_modules_are_deployed" {
   command = plan
 
   assert {
-    condition     = sha256(cloudflare_workers_script.download_count.content) == "dd7b3a6732785548c3296f04a469b560e7558f9de07337e9f5eb97255ea70d89"
+    condition     = sha256(cloudflare_workers_script.download_count.content) == "5dc30a3252d6cdc88a1821df4991aacd6f88c9b1d2519a7fd7eedff898530ff3"
     error_message = "The script's content is not scripts/download-count-worker.mjs at the pinned commit."
   }
 
