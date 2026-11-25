@@ -30,7 +30,8 @@ no expiration were refused in the download count Worker's runs at
 2026-11-25T07:31Z and 08:31Z, both with "page 1 of GitHub's releases
 answered HTTP 403", which is not GitHub's rate limit: the run record shows
 that one as `rate-limited`. A token that expires in a year read the releases
-locally with HTTP 200.
+locally with HTTP 200. Bound to the Worker at 08:36Z, it read them in the
+Worker's run at 09:31Z too, whose entry has `github` `ok`.
 
 ## Which Workers bind it
 
