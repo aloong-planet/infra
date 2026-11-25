@@ -235,6 +235,11 @@ same project and overwrite each other, and leave the entry in place afterwards:
 removing it would delete the project. Setting the value back to `true` starts
 Git builds again.
 
+The module sets both settings for every entry, the ones whose value is `true`
+included (production builds, and previews of the other branches), so a change
+made to them in the dashboard shows up as drift in the next plan, and the value
+in the entry is the only thing that decides them.
+
 ### Checking a project after its first apply
 
 The project should have a production deployment from `production_branch`,
