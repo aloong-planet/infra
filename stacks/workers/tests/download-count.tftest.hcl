@@ -201,13 +201,28 @@ run "a_releases_read_token_of_another_kind_deploys_nothing" {
   ]
 }
 
-# The Worker sends the token as it is bound, so a newline pasted with it
-# would reach GitHub as part of the token.
+# A newline pasted after the token is dropped from the request's header but
+# stays in the bound value, which the Worker removes verbatim from a
+# failure's text: a failure's text holding the token alone would keep it.
 run "a_releases_read_token_with_a_trailing_newline_deploys_nothing" {
   command = plan
 
   variables {
     releases_read_token = "github_pat_stand_in_releases_token\n"
+  }
+
+  expect_failures = [
+    cloudflare_workers_script.download_count,
+  ]
+}
+
+# A space inside the token stays in the request's header, and a bearer token
+# holds no space (RFC 6750, b64token), so GitHub is sent no token it issued.
+run "a_releases_read_token_with_a_space_inside_deploys_nothing" {
+  command = plan
+
+  variables {
+    releases_read_token = "github_pat_stand_in releases_token"
   }
 
   expect_failures = [
