@@ -35,14 +35,18 @@ locals {
       domain      = "agentshed.aloongplanet.com"
     }
 
-    # JustSnap's landing page: its docs/specs/landing-page.md, built from the
-    # Astro package in site/ of the justsnap repository. The build settings
-    # are the ones that package's site/README.md lists, the same as
+    # JustSnap's landing page: aloong-planet-home's docs/specs/justsnap-site.md,
+    # justsnap-site::CON-001 (https://github.com/aloong-planet/aloong-planet-home/blob/main/docs/specs/justsnap-site.md).
+    # The site is built and deployed by aloong-planet-home's CI, which uploads
+    # it to this project (that repository's ADR-0001), so Git builds are off:
+    # a push to justsnap builds nothing. The project stays connected to
+    # justsnap, and the build settings below are the ones the site had there
+    # while it was built from that repository's site/ directory, the same as
     # agentshed's. Its release mirror (release-mirrors.tf) allows this
     # page's origin to read the latest pointer.
     justsnap = {
       repository         = "justsnap"
-      git_builds_enabled = true
+      git_builds_enabled = false
       production_branch  = "main"
       root_dir           = "site"
       build_command      = "pnpm install --frozen-lockfile && pnpm build"
