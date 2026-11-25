@@ -114,8 +114,8 @@ The stack outputs each entry's zone ID and release bucket
 `workers` stack binds them to the app's download count Worker, which reads
 its download host's traffic from Cloudflare's GraphQL Analytics API with the
 token and the zone ID. The bucket is the release mirror's, so an entry here
-needs one in `release_mirrors` too. Nothing is written to the app's
-repository.
+needs one in `release_mirrors` too. The entry itself writes nothing to the
+app's repository.
 
 agentshed is the first entry (agentshed ADR-0055, `docs/specs/download-count.md`,
 `download-count::REQ-011`).
