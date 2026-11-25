@@ -17,9 +17,11 @@ agentshed is the first app with both (agentshed ADR-0031,
 [`docs/specs/agentshed-site.md`](https://github.com/aloong-planet/aloong-planet-home/blob/main/docs/specs/agentshed-site.md),
 `agentshed-site::CON-001`); its landing page is built and deployed by
 aloong-planet-home, so its Git builds are off (below). JustSnap has both too,
-and its landing page's build settings are in `site/README.md` of the
-`justsnap` repository. Transfer has a landing page only, the entry
-`transfer-org`; its release bucket is not managed here.
+and its landing page is built and deployed by aloong-planet-home as well
+([`docs/specs/justsnap-site.md`](https://github.com/aloong-planet/aloong-planet-home/blob/main/docs/specs/justsnap-site.md),
+`justsnap-site::CON-001`), so its Git builds are off too. Transfer has a
+landing page only, the entry `transfer-org`; its release bucket is not managed
+here.
 
 The stack runs through the `Terraform apps` workflow in the `production`
 environment, and its state key is `infra/terraform.tfstate`. The repository
@@ -177,13 +179,13 @@ Each entry in `landing_pages` gets, through `modules/landing-page`:
 
 Cloudflare runs the builds of the entries whose `git_builds_enabled` is true;
 nothing here builds or deploys a site. Pull requests from forks get no preview
-deployment. The build settings of those entries come from the app's own
-documentation (for justsnap, "Deploying" in `site/README.md`); when that
-changes, change the entry.
+deployment. Nothing here reads the build settings of those entries from the
+app's repository: when the app's build changes, change the entry (Transfer's
+values are described below).
 
-An entry with `git_builds_enabled` false (agentshed's) builds nothing: its
-site is built by aloong-planet-home's CI and uploaded to the project with
-Wrangler (that repository's
+An entry with `git_builds_enabled` false (agentshed's and justsnap's) builds
+nothing: its site is built by aloong-planet-home's CI and uploaded to the
+project with Wrangler (that repository's
 [ADR-0001](https://github.com/aloong-planet/aloong-planet-home/blob/main/docs/adr/0001-app-websites-in-this-repository.md)).
 The project stays connected to its repository, because Cloudflare does not
 switch a Git project to Direct Upload, and its build settings are kept but
@@ -214,9 +216,9 @@ access in the organization's GitHub Apps settings.
    (JustSnap's is `justsnap-ceo.pages.dev`). By convention the domain is
    `<app>.aloongplanet.com`. If the app has a release mirror, its
    `allowed_origins` should list `https://<domain>`. The entry's
-   `git_builds_enabled` is required: `true` if Cloudflare builds the site on pushes, as JustSnap's
-   and Transfer's do, or `false` if the site is built and uploaded elsewhere,
-   as agentshed's is (see below).
+   `git_builds_enabled` is required: `true` if Cloudflare builds the site on pushes, as Transfer's
+   does, or `false` if the site is built and uploaded elsewhere, as
+   agentshed's and JustSnap's are (see below).
 3. Open a pull request, merge it, and approve Plan and then Apply in the
    `Terraform apps` run. The plan should add the new entry's 3 resources and
    change nothing else.
