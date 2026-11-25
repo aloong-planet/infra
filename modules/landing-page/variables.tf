@@ -55,6 +55,11 @@ variable "watch_paths" {
   type        = list(string)
 }
 
+variable "git_builds_enabled" {
+  description = "Whether a push to the repository starts a build: a production build on production_branch, a preview build on any other branch. When false, no push starts one and the project's deployments are uploaded with Wrangler from elsewhere. The project stays connected to the repository (Cloudflare does not turn a Git project into a Direct Upload one), and the build settings above are kept for when this is true again."
+  type        = bool
+}
+
 variable "domain" {
   description = "Custom domain of the landing page, in the zone_id zone."
   type        = string

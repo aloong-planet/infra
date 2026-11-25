@@ -8,9 +8,9 @@
 
 locals {
   download_counts = {
-    # agentshed ADR-0055, docs/specs/download-count.md
-    # (download-count::REQ-011). Its download host,
-    # dl.agentshed.aloongplanet.com, is in this zone (release-mirrors.tf).
+    # agentshed ADR-0055, docs/specs/download-count.md (download-count::REQ-011).
+    # Its download host, dl.agentshed.aloongplanet.com, is in this zone
+    # (release-mirrors.tf).
     agentshed = {
       repository = "agentshed"
     }
