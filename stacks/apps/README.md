@@ -20,8 +20,10 @@ aloong-planet-home, so its Git builds are off (below). JustSnap has both too,
 and its landing page is built and deployed by aloong-planet-home as well
 ([`docs/specs/justsnap-site.md`](https://github.com/aloong-planet/aloong-planet-home/blob/main/docs/specs/justsnap-site.md),
 `justsnap-site::CON-001`), so its Git builds are off too. Transfer has a
-landing page only, the entry `transfer-org`; its release bucket is not managed
-here.
+landing page only, the entry `transfer-org`, whose Git builds are off so that
+aloong-planet-home can build and deploy its site
+([aloong-planet-home#27](https://github.com/aloong-planet/aloong-planet-home/issues/27));
+its release bucket is not managed here.
 
 The stack runs through the `Terraform apps` workflow in the `production`
 environment, and its state key is `infra/terraform.tfstate`. The repository
@@ -164,15 +166,16 @@ Each entry in `landing_pages` gets, through `modules/landing-page`:
 | Pages custom domain | The entry's `domain` |
 | DNS record | A proxied `CNAME` from `domain` to the project's `pages.dev` host, in the `aloongplanet.com` zone |
 
-Cloudflare runs the builds of the entries whose `git_builds_enabled` is true;
-nothing here builds or deploys a site. Pull requests from forks get no preview
-deployment. Nothing here reads the build settings of those entries from the
-app's repository: when the app's build changes, change the entry (Transfer's
-values are described below).
+Cloudflare runs the builds of an entry whose `git_builds_enabled` is true;
+nothing here builds or deploys a site, and no entry is set to true now. Pull
+requests from forks get no preview deployment. Nothing here reads the build
+settings of such an entry from the app's repository: when the app's build
+changes, change the entry.
 
-An entry with `git_builds_enabled` false (agentshed's and justsnap's) builds
-nothing: its site is built by aloong-planet-home's CI and uploaded to the
-project with Wrangler (that repository's
+An entry with `git_builds_enabled` false builds nothing: its site is built by
+aloong-planet-home's CI and uploaded to the project with Wrangler, as
+agentshed's and justsnap's are and Transfer's is to be (below; that
+repository's
 [ADR-0001](https://github.com/aloong-planet/aloong-planet-home/blob/main/docs/adr/0001-app-websites-in-this-repository.md)).
 The project stays connected to its repository, because Cloudflare does not
 switch a Git project to Direct Upload, and its build settings are kept but
@@ -182,7 +185,13 @@ Transfer's page, the entry `transfer-org`, was made in the dashboard before
 this stack existed. `imports.tf` brings its project, domain and DNS record
 into the state, and its entry holds the values the project had then, which
 differ from the other entries: the `master` branch, Node 20, `pnpm install`
-without a frozen lockfile, and a build on every push.
+without a frozen lockfile, and a watch path of the whole repository, so that
+every push built. Its Git builds are now off, so that aloong-planet-home's CI
+can build and deploy its site to the project instead
+([aloong-planet-home#27](https://github.com/aloong-planet/aloong-planet-home/issues/27)),
+and those settings are a record of how Cloudflare built it from `site/` in
+Transfer's repository. Once that repository drops `site/`, setting the value
+back to `true` would start builds of a directory that is not there.
 
 ### Connecting a repository
 
@@ -203,9 +212,10 @@ access in the organization's GitHub Apps settings.
    (JustSnap's is `justsnap-ceo.pages.dev`). By convention the domain is
    `<app>.aloongplanet.com`. If the app has a release mirror, its
    `allowed_origins` should list `https://<domain>`. The entry's
-   `git_builds_enabled` is required: `true` if Cloudflare builds the site on pushes, as Transfer's
-   does, or `false` if the site is built and uploaded elsewhere, as
-   agentshed's and JustSnap's are (see below).
+   `git_builds_enabled` is required: `true` if Cloudflare builds the site on
+   pushes, as Transfer's did until its Git builds were turned off, or `false`
+   if the site is built and uploaded elsewhere, as agentshed's and JustSnap's
+   are and Transfer's is to be (see below).
 3. Open a pull request, merge it, and approve Plan and then Apply in the
    `Terraform apps` run. The plan should add the new entry's 3 resources and
    change nothing else.
@@ -224,8 +234,23 @@ The plan should change that one project in place and nothing else.
 
 Turn them off before the site's new deployer starts, so two never deploy the
 same project and overwrite each other, and leave the entry in place afterwards:
-removing it would delete the project. Setting the value back to `true` starts
-Git builds again.
+removing it would delete the project.
+
+The way back is not always open. The entry's build settings stay as a record
+of how Cloudflare built the site, and setting the value back to `true` starts
+builds from them, on the pushes `watch_paths` select, so it works only while
+the app's repository still holds the directory `root_dir` names, with what the
+build needs. agentshed's and justsnap's repositories have dropped `site/`, and
+their watch path is `site/*`, so for those two `true` would start no build on
+an ordinary push, only on one that changes `site/` again. Transfer's watch path
+is the whole repository, so once it drops `site/`, `true` would start a build
+of a directory that is not there on every push. Either way the site does not
+come back. (Cloudflare's [build watch
+paths](https://developers.cloudflare.com/pages/configuration/build-watch-paths/)
+skip the build of a push that changes none of the included paths, except an
+empty push and one of 3000 or more changed files or 20 or more commits, which
+always build.) Before setting such an entry back to `true`, restore the
+directory in the repository and check the entry's build settings against it.
 
 The module sets both settings for every entry, the ones whose value is `true`
 included (production builds, and previews of the other branches), so a change

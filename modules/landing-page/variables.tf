@@ -56,7 +56,7 @@ variable "watch_paths" {
 }
 
 variable "git_builds_enabled" {
-  description = "Whether a push to the repository starts a build: a production build on production_branch, a preview build on any other branch. When false, no push starts one and the project's deployments are uploaded with Wrangler from elsewhere. The project stays connected to the repository (Cloudflare does not turn a Git project into a Direct Upload one), and the build settings above are kept for when this is true again."
+  description = "Whether a push to the repository starts a build: a production build on production_branch, a preview build on any other branch. When false, no push starts one and the project's deployments are uploaded with Wrangler from elsewhere. The project stays connected to the repository (Cloudflare does not turn a Git project into a Direct Upload one), and the build settings above are kept as a record only. Setting this back to true starts builds from root_dir of the repository, on the pushes watch_paths select, so it works only while the repository still holds that directory with what the build needs. For a repository that has dropped it, true does not bring the site back: if watch_paths name only that directory, an ordinary push starts no build until one changes it again, and if they match any push, every push starts a build of a directory that is not there."
   type        = bool
 }
 
