@@ -10,7 +10,7 @@
 # both hashes here in one pull request (this stack's README).
 
 locals {
-  agentshed_commit = "735f3ebd90bde67a303dda5f0f6100cf72ca68a7"
+  agentshed_commit = "627c8cc9eb5fd29c4f689899d480238069ef9da8"
 
   # Keyed by the name each module is uploaded under, which is the name the
   # main module imports the core by.
