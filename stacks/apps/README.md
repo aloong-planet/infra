@@ -179,8 +179,9 @@ Each entry in `landing_pages` gets, through `modules/landing-page`:
 
 Cloudflare runs the builds of the entries whose `git_builds_enabled` is true;
 nothing here builds or deploys a site. Pull requests from forks get no preview
-deployment. The build settings of those entries are the app's own build
-(Transfer's, below); when it changes, change the entry.
+deployment. Nothing here reads the build settings of those entries from the
+app's repository: when the app's build changes, change the entry (Transfer's
+values are described below).
 
 An entry with `git_builds_enabled` false (agentshed's and justsnap's) builds
 nothing: its site is built by aloong-planet-home's CI and uploaded to the
