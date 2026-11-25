@@ -63,9 +63,9 @@ logs are public. Terraform 1.16.6 prints a value set in a `.tfvars` or a test
 file, and not one from `TF_VAR_`, the workflow's source; 1.11.2 printed one
 from `TF_VAR_` too. A failing precondition printed nothing of it in either.
 
-Terraform does not create the token. agentshed's runbook
-(`docs/ops/download-count.md`, "The read-only GitHub token") makes it,
-stores it in the environment and renews it.
+Terraform does not create the token. What it is, how long it may last, and
+how it is made, stored and renewed are in its runbook,
+`docs/ops/releases-read-token.md`.
 
 ### The pinned modules
 
@@ -120,5 +120,6 @@ space inside it or with a no-break space after it. It does
 not show which token the provider uses, or whether Cloudflare accepts the
 upload. A Plan does not show them either: the provider does not check its
 token, and planning new resources calls no API. The first Apply shows both.
-Whether GitHub accepts the read-only token shows only in the Worker's run
-record after it.
+Whether GitHub accepts the read-only token shows only in the check its
+runbook makes before the token is stored (`docs/ops/releases-read-token.md`)
+and in the Worker's run record after the Apply.

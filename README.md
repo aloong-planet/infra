@@ -166,10 +166,10 @@ The environment holds one secret the env file does not: `RELEASES_READ_TOKEN`,
 the read-only GitHub token (agentshed ADR-0057) that the `workers` stack
 binds to agentshed's download count Worker. It is a fine-grained PAT on the
 owner's account, read-only on public repositories and with no permissions,
-and Terraform does not create it. agentshed's runbook
-(`docs/ops/download-count.md`, "The read-only GitHub token") stores it
-straight into the environment and renews it there; kept out of the env file,
-it is never written over by the command below.
+and Terraform does not create it. Its runbook,
+`docs/ops/releases-read-token.md`, stores it straight into the environment
+and renews it there; kept out of the env file, it is never written over by
+the command below.
 
 The local file is `~/.config/aloong-planet/infra.env` (mode 600, outside the
 repository). To load it into the environment:

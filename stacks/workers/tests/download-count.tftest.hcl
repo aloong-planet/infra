@@ -15,8 +15,9 @@
 # - Whether the workflows pass the production environment's
 #   RELEASES_READ_TOKEN to releases_read_token: a secret they do not pass
 #   arrives empty, which the empty-token run below shows the Plan refuses.
-# - Whether GitHub accepts the token: only the Worker's first run after the
-#   Apply shows it, in its run record (agentshed's runbook).
+# - Whether GitHub accepts the token: only the check before it is stored
+#   (docs/ops/releases-read-token.md) and the Worker's first run after the
+#   Apply, in its run record (agentshed's runbook), show it.
 # - That a failed precondition prints nothing of the token: Terraform's
 #   behaviour, seen by hand, not something a run can assert.
 
