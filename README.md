@@ -1,13 +1,13 @@
 # aloong-planet infra
 
 Terraform for aloong-planet's cloud resources, organized into stacks. Today
-there are three. `apps` manages per-app resources: the R2 release mirrors that
+there are four. `apps` manages per-app resources: the R2 release mirrors that
 apps publish their formal releases to, the apps' landing pages, and read
 access to the zone's analytics for the apps that count their downloads. It
 also mints the token the `workers` stack deploys with. `workers` manages
 Cloudflare Workers that run on a schedule: today agentshed's download count
 Worker. `zone` manages the one setting of the shared `aloongplanet.com` zone
-that is under Terraform, its Browser Cache TTL.
+that is under Terraform, its Browser Cache TTL. The `access` stack protects the voice assistant.
 
 ## Layout
 
@@ -19,6 +19,7 @@ modules/                 building blocks, one per capability
 stacks/                  one Terraform root each: its own state, credentials, approvals
   apps/                  per-app resources (stacks/apps/README.md)
   workers/               scheduled Cloudflare Workers (stacks/workers/README.md)
+  access/                the voice assistant Access application (stacks/access/README.md)
   zone/                  settings of the shared aloongplanet.com zone (stacks/zone/README.md)
   <stack>/tests/         the stack's terraform test files, if it has any
 scripts/                 plan, apply, state snapshots and log redaction, for every stack
@@ -49,6 +50,7 @@ named for what it does. It starts a new stack only when one of these holds:
 | `apps` | Per-app resources: R2 release mirrors, landing pages and download counts' analytics tokens; the Workers deploy token | `production` | `infra/terraform.tfstate` |
 | `workers` | Scheduled Cloudflare Workers: today agentshed's download count Worker | `production` | `workers/terraform.tfstate` |
 | `zone` | Settings of the shared `aloongplanet.com` zone: today only its Browser Cache TTL | `production` | `zone/terraform.tfstate` |
+| `access` | Voice assistant self-hosted Access application | `production` | `access/terraform.tfstate` |
 
 The `apps` key predates the split into stacks and was kept so the state did
 not have to move; new stacks use `<stack>/terraform.tfstate`.
@@ -145,9 +147,9 @@ Only when the criteria above call for one.
 ## Credentials
 
 Every stack's environment holds `CLOUDFLARE_ACCOUNT_ID` and the `STATE_R2_*`
-values for the state backend, plus what its resources need. Today there is
-one environment, `production`, used by every stack. These five values have
-the same names in the local env file and as its secrets:
+values for the state backend, plus what its resources need. All four stacks use
+`production`. The five credentials below have the same names in the local env
+file and in the environment:
 
 | Name | What it is | Scope |
 |---|---|---|
@@ -162,7 +164,11 @@ include no Workers permission. It deploys with the account API token
 the account only and which the workers stack reads from apps' state. That
 token is not in the env file or in any environment.
 
-The environment holds one secret the env file does not: `RELEASES_READ_TOKEN`,
+The `access` stack uses a dedicated `CLOUDFLARE_ACCESS_API_TOKEN` secret in
+`production` for its Cloudflare provider. Its login variables and token scope
+are documented in `stacks/access/README.md`. Plan this stack through its workflow.
+
+The environment also holds `RELEASES_READ_TOKEN`,
 the read-only GitHub token (agentshed ADR-0057) that the `workers` stack
 binds to agentshed's download count Worker. It is a fine-grained PAT on the
 owner's account, read-only on public repositories and with no permissions,
