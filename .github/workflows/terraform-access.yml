@@ -1,0 +1,37 @@
+name: Terraform access
+
+# The Access stack (stacks/access). Plan and apply are in terraform-stack.yml.
+# The stack uses no module, so module changes do not start it.
+on:
+  push:
+    branches: [main]
+    paths:
+      - stacks/access/**.tf
+      - stacks/access/.terraform.lock.hcl
+      - scripts/**
+      - '!scripts/tests/**'
+      - .tool-versions
+      - .github/workflows/terraform-access.yml
+      - .github/workflows/terraform-stack.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Runs of a stack are serialized, so one run's Plan and Apply never interleave
+# with another's.
+concurrency:
+  group: terraform-access
+  cancel-in-progress: false
+
+jobs:
+  access:
+    uses: ./.github/workflows/terraform-stack.yml
+    with:
+      stack: access
+      environment: production
+    secrets:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      STATE_R2_ACCESS_KEY_ID: ${{ secrets.STATE_R2_ACCESS_KEY_ID }}
+      STATE_R2_SECRET_ACCESS_KEY: ${{ secrets.STATE_R2_SECRET_ACCESS_KEY }}
+      CLOUDFLARE_ACCESS_API_TOKEN: ${{ secrets.CLOUDFLARE_ACCESS_API_TOKEN }}
