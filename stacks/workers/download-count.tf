@@ -4,23 +4,24 @@
 # writes the statistics file. What it writes, and how to read its runs, is in
 # agentshed's docs/ops/download-count.md, "What a Worker run does".
 #
-# The modules are agentshed's, deployed from the commit pinned below and
-# checked against their pinned SHA-256 before anything is planned. To change
-# the Worker, merge the agentshed change first, then change the commit and
-# both hashes here in one pull request (this stack's README).
+# The modules are aloong-planet-home's (workers/download-count, agentshed
+# ADR-0058), deployed from the commit pinned below and checked against their
+# pinned SHA-256 before anything is planned. To change the Worker, merge the
+# aloong-planet-home change first, then change the commit and both hashes here
+# in one pull request (this stack's README).
 
 locals {
-  agentshed_commit = "60f4d648a2a95dc2ff56914ece790e238beafe14"
+  home_commit = "8c5d8c696fcfb7070ff39cb301d72076cdfb8338"
 
   # Keyed by the name each module is uploaded under, which is the name the
   # main module imports the core by.
   download_count_modules = {
     "download-count-worker.mjs" = {
-      path   = "scripts/download-count-worker.mjs"
-      sha256 = "457b396e22b16646fd045f7af211927403d6fe2adca3e652cc58302dfb01e1a7"
+      path   = "workers/download-count/scripts/download-count-worker.mjs"
+      sha256 = "d172a9a0993abbd2af60b2135004e2a46177602905150dcd69ced6db7ee7192e"
     }
     "download-count-core.mjs" = {
-      path   = "scripts/download-count-core.mjs"
+      path   = "workers/download-count/scripts/download-count-core.mjs"
       sha256 = "d868ac2cad6e9612fee5e91c09227439adc410c4c82fc5ce3c44dc832613eeeb"
     }
   }
@@ -34,7 +35,7 @@ locals {
 data "http" "download_count_module" {
   for_each = local.download_count_modules
 
-  url = "https://raw.githubusercontent.com/aloong-planet/agentshed/${local.agentshed_commit}/${each.value.path}"
+  url = "https://raw.githubusercontent.com/aloong-planet/aloong-planet-home/${local.home_commit}/${each.value.path}"
 
   # A dropped connection or a 5xx is tried again, up to three times in all,
   # rather than failing the plan.

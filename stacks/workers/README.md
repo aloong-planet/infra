@@ -18,7 +18,7 @@ change ships, credentials and running locally.
 
 | Resource | Details |
 |---|---|
-| Workers script `agentshed-download-count` | Two ES modules from agentshed at the pinned commit: `download-count-worker.mjs`, the main module, and `download-count-core.mjs` beside it, under the names the main module imports |
+| Workers script `agentshed-download-count` | Two ES modules from aloong-planet-home at the pinned commit: `download-count-worker.mjs`, the main module, and `download-count-core.mjs` beside it, under the names the main module imports |
 | Cron Trigger | Minute 31 of every hour |
 | workers.dev setting | Off, previews included: the Worker answers no request |
 
@@ -53,8 +53,9 @@ whitespace. A space or tab inside the token, or a character outside ASCII
 anywhere in it, reaches GitHub as part of it, and a newline inside it fails
 the request. A space, tab or line break after it is dropped from the
 request's header (a form feed or vertical tab is not), but not from the bound
-value, which the Worker removes verbatim from a failure's text (agentshed's
-`scripts/download-count-worker.mjs`).
+value, which the Worker removes verbatim from a failure's text
+(`workers/download-count/scripts/download-count-worker.mjs` in
+aloong-planet-home).
 
 Both checks are preconditions on the Worker, not a validation on the
 variable, because whether a failing validation prints a sensitive value
@@ -69,17 +70,18 @@ how it is made, stored and renewed are in its runbook,
 
 ### The pinned modules
 
-`download-count.tf` pins an agentshed commit and the SHA-256 of each module at
-that commit. The plan fetches each module from
+`download-count.tf` pins an aloong-planet-home commit and the SHA-256 of each
+module at that commit. The modules are in `workers/download-count/scripts/`
+there (agentshed ADR-0058). The plan fetches each module from
 `raw.githubusercontent.com` at that commit and fails at its postcondition
 when the content's hash is not the pinned one, so nothing is deployed.
 
-To change the Worker, merge the agentshed pull request first. Then, in one
-pull request here, set the commit to its merge commit and both hashes to
-the output of this command at that commit in agentshed:
+To change the Worker, merge the aloong-planet-home pull request first. Then,
+in one pull request here, set the commit to its merge commit and both hashes
+to the output of this command at that commit in aloong-planet-home:
 
 ```sh
-shasum -a 256 scripts/download-count-worker.mjs scripts/download-count-core.mjs
+shasum -a 256 workers/download-count/scripts/download-count-worker.mjs workers/download-count/scripts/download-count-core.mjs
 ```
 
 `tests/download-count.tftest.hcl` writes the same hashes out, so change them

@@ -50,8 +50,8 @@ run "the_pinned_modules_are_deployed" {
   command = plan
 
   assert {
-    condition     = sha256(cloudflare_workers_script.download_count.content) == "457b396e22b16646fd045f7af211927403d6fe2adca3e652cc58302dfb01e1a7"
-    error_message = "The script's content is not scripts/download-count-worker.mjs at the pinned commit."
+    condition     = sha256(cloudflare_workers_script.download_count.content) == "d172a9a0993abbd2af60b2135004e2a46177602905150dcd69ced6db7ee7192e"
+    error_message = "The script's content is not workers/download-count/scripts/download-count-worker.mjs at the pinned aloong-planet-home commit."
   }
 
   assert {
@@ -71,7 +71,7 @@ run "the_pinned_modules_are_deployed" {
 
   assert {
     condition     = sha256(base64decode(cloudflare_workers_script.download_count.files["download-count-core.mjs"].content_base64)) == "d868ac2cad6e9612fee5e91c09227439adc410c4c82fc5ce3c44dc832613eeeb"
-    error_message = "download-count-core.mjs is not scripts/download-count-core.mjs at the pinned commit."
+    error_message = "download-count-core.mjs is not workers/download-count/scripts/download-count-core.mjs at the pinned aloong-planet-home commit."
   }
 }
 
